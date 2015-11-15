@@ -39,7 +39,9 @@
 				<li><a href="liste-commune.php">Liste des communes</a></li>
 					<li class="divider"></li>
 					<li class="dropdown-header">Super Admin</li>
-				<li><a href="role.php">Gestion des rôles</a></li>
+				<li><a href="role.php">Gestion des rôles (OLD)</a></li>
+        <li><a href="role-manage.php">Gestion des rôles</a></li>
+        <li><a href="permission-manage.php">Gestion des permissions</a></li>
               </ul>
             </li>
 <?php }?>
