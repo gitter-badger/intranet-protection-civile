@@ -22,7 +22,8 @@
 	<ol class="breadcrumb">
 		<li><a href="/">Home</a></li>
 		<li><a href="#">Administration</a></li>
-		<li class="active">Modification de permission</li>
+		<li><a href="/permission-manage.php">Gestion des permissions</a></li>
+		<li class="active">Modification</li>
 	</ol>
 
 

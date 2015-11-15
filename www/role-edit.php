@@ -22,7 +22,8 @@
 	<ol class="breadcrumb">
 		<li><a href="/">Home</a></li>
 		<li><a href="#">Administration</a></li>
-		<li class="active">Modification de rôle</li>
+		<li><a href="/role-manage.php">Gestion des rôles</a></li>
+		<li class="active">Modification</li>
 	</ol>
 
 
