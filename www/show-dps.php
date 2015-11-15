@@ -22,6 +22,36 @@ $dps = mysqli_fetch_array($dps_result);}
 	<div class="container">
 
 			<h2>DPS : <?php echo $dps['cu_complet'];?></h2>
+			
+			<?php
+if($dps['etat_demande_dps'] == "1"){?>
+<div class='alert alert-success'><span class="glyphicon glyphicon-ok" style="font-size:2em"></span> <strong>Demande de poste validée le : </strong><?php echo date("d-m-Y", strtotime($dps['valid_demande_dps']));?></div>
+<?php }
+			if($_SESSION['commune'] == "0"){
+			?>
+			<div class="panel panel-warning">
+					<div class="panel-heading">
+						<h3 class="panel-title">Accès spécial DDO</h3>
+					</div>
+				<div class="panel-body">
+						<div class="form-group">
+							<div class="col-sm-4">
+								<button type="submit" class="btn btn-success" data-toggle="modal" data-target="#ModalAccept">Valider la demande de DPS</button>
+						    </div>
+					<form class="form-horizontal" role="form" action="edit-dps.php" method="post">
+						<input type='hidden' name='id' value='<?php echo $dps['id'];?>'>
+							<div class="col-sm-4">
+								<button type="submit" class="btn btn-warning">Modifier la demande de DPS</button>
+						    </div>
+					</form>
+					<div class="col-sm-4">
+						<button type="button" class="btn btn-danger" data-toggle="modal" data-target="#ModalRefus" <?php if($dps['valid_demande_rt'] ==0){echo "disabled";}?>>Refuser la demande de DPS</button>
+					</div>
+						</div>
+				</div>
+			</div>
+			<?php }?>
+			
 				<div class="panel panel-default">
 					<div class="panel-heading">
 						<h3 class="panel-title">Organisateur</h3>
@@ -430,7 +460,7 @@ $dps = mysqli_fetch_array($dps_result);}
 								<p>Appartenance</p>
 								</div>
 								<div class="col-sm-8">
-									<p class="bg-info"><?php echo $dps['infirmer'];?></p>
+									<p class="bg-info"><?php echo $dps['infirmier'];?></p>
 								</div>
 							</div>
 							</li>
@@ -466,6 +496,10 @@ $dps = mysqli_fetch_array($dps_result);}
 			</div>
 		
 	</div>
-		<?php } include 'footer.php'; ?>
+<!-- Modal -->
+
+		<?php
+	include 'functions/modals.php';
+		} include 'footer.php'; ?>
 	</body>
 	</html>

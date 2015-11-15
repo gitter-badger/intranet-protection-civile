@@ -16,9 +16,6 @@ if ($_SESSION['privilege'] != "admin") { header("Location: accueil.php"); }else{
 	<?php include 'header.php'; ?>
 	<div class="container">
 	<?php
-	if(empty($_POST['update']) && empty($_POST['modifier'])){
-		echo "<div class='alert alert-danger'><strong>Erreur</strong> : Pas de commune sélectionnée</div>";
-	}else{
 	
 	if(isset($_POST['update'])){
 	$nom="";
@@ -47,7 +44,7 @@ if ($_SESSION['privilege'] != "admin") { header("Location: accueil.php"); }else{
 	
 	}elseif (isset($_POST['modifier'])){
 	$numero = $_POST['modifier'];
-	$query = "SELECT * FROM commune WHERE id=$numero";
+	$query = "SELECT * FROM commune WHERE numero=$numero";
 	$result = mysqli_query($link, $query);
 
 	$affichage = mysqli_fetch_array($result);
@@ -61,7 +58,8 @@ if ($_SESSION['privilege'] != "admin") { header("Location: accueil.php"); }else{
 	$mail = $affichage['mail'];
 	$nomcode = $affichage['nomcode'];
 	$site = $affichage['site'];
-	}
+	}else{
+	echo "<div class='alert alert-danger'><strong>Erreur</strong> : Pas de commune sélectionnée</div>";}
 	?>
 			
 			<form class="form-horizontal" role="form" action="" method="post">
@@ -161,6 +159,6 @@ if ($_SESSION['privilege'] != "admin") { header("Location: accueil.php"); }else{
 	
 	
 	</div>
-	<?php }} include 'footer.php'; ?>
+	<?php } include 'footer.php'; ?>
 	</body>
 </html>

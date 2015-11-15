@@ -19,7 +19,7 @@ if ($_SESSION['privilege'] != "admin") { header("Location: accueil.php"); }else{
 			<h3 class="panel-title">Liste des Dispositifs Prévisionnels de Secours</h3>
 		</div>
 		<div class="panel-body">
-		<div class="table-responsive">
+		<div class="table-responsive" style="vertical-align: middle;">
 		<table class="table table-bordered table-condensed">
 			<tr>
 				<th>Date</th>
@@ -46,7 +46,25 @@ if ($_SESSION['privilege'] != "admin") { header("Location: accueil.php"); }else{
 		else{
 		$pagecurrent=1;}
 		$premiereEntree=($pagecurrent-1)*$dpsperpage;
-		$query = "SELECT id, dps_debut_poste, cu_complet, dept, type_dps, description_manif, commune_ris, valid_demande_rt FROM demande_dps WHERE commune_ris = $commune ORDER BY id DESC LIMIT $premiereEntree, $dpsperpage";
+		$query = "SELECT id, dps_debut_poste, cu_complet, dept, type_dps, description_manif, commune_ris, valid_demande_rt, valid_demande_dps, etat_demande_dps FROM demande_dps WHERE commune_ris = $commune ORDER BY id DESC LIMIT $premiereEntree, $dpsperpage";
+		$listedps_result = mysqli_query($link, $query);
+		
+		}elseif(isset($_GET['filter'])){
+		$filter = $_GET['filter'];
+		if($filter == "en-attente"){
+		$query = "SELECT id, etat_demande_dps, valid_demande_rt FROM demande_dps WHERE valid_demande_rt NOT LIKE '0000-00-00' AND valid_demande_dps LIKE '0000-00-00'";}
+		$number_dps = mysqli_query($link, $query);
+		$row_cnt = mysqli_num_rows($number_dps);
+		$numberpages=ceil($row_cnt/$dpsperpage);
+		
+		if(isset($_GET['page'])){
+		$pagecurrent=intval($_GET['page']);
+		if($pagecurrent>$numberpages){
+		$pagecurrent=$numberpages;}}
+		else{
+		$pagecurrent=1;}
+		$premiereEntree=($pagecurrent-1)*$dpsperpage;
+		$query = "SELECT id, dps_debut_poste, cu_complet, dept, type_dps, description_manif, commune_ris, valid_demande_rt, valid_demande_dps, etat_demande_dps FROM demande_dps WHERE valid_demande_rt NOT LIKE '0000-00-00' AND valid_demande_dps LIKE '0000-00-00' ORDER BY id DESC LIMIT $premiereEntree, $dpsperpage";
 		$listedps_result = mysqli_query($link, $query);
 		
 		}else{
@@ -62,22 +80,42 @@ if ($_SESSION['privilege'] != "admin") { header("Location: accueil.php"); }else{
 		else{
 		$pagecurrent=1;}
 		$premiereEntree=($pagecurrent-1)*$dpsperpage;
-		$query = "SELECT id, dps_debut_poste, cu_complet, dept, type_dps, description_manif, commune_ris, valid_demande_rt FROM demande_dps ORDER BY id DESC LIMIT $premiereEntree, $dpsperpage";
+		$query = "SELECT id, dps_debut_poste, cu_complet, dept, type_dps, description_manif, commune_ris, valid_demande_rt, valid_demande_dps, etat_demande_dps FROM demande_dps ORDER BY id DESC LIMIT $premiereEntree, $dpsperpage";
 		$listedps_result = mysqli_query($link, $query);
 		}
 		while($listedps = mysqli_fetch_array($listedps_result)){
-			if($listedps["valid_demande_rt"] == 0){
+			if($listedps["valid_demande_rt"] == 0 && $listedps["etat_demande_dps"] == "0"){
 				$validation=false;
+				$validation_ec=false;
+				$refus=false;
 				$urlform = "edit-dps.php";
 				$buttonclass = "btn btn-warning";
 				$buttonmessage = "Modifier";
-				echo "<tr class='warning'>";
-			}else{
+				echo "<tr>";
+			}elseif($listedps["valid_demande_rt"] == 0 && $listedps["etat_demande_dps"] == "2"){
+				$refus=true;
 				$validation=true;
+				$validation_ec=false;
+				$urlform = "edit-dps.php";
+				$buttonclass = "btn btn-danger";
+				$buttonmessage = "Modifier";
+				echo "<tr class='danger'>";
+			}elseif($listedps["etat_demande_dps"] == "1"){
+				$validation=true;
+				$validation_ec=false;
+				$refus=false;
 				$urlform = "show-dps.php";
 				$buttonclass = "btn btn-success";
 				$buttonmessage = "Acceder";
 				echo "<tr class='success'>";
+			}else{
+				$validation=false;
+				$validation_ec=true;
+				$refus=false;
+				$urlform = "show-dps.php";
+				$buttonclass = "btn btn-success";
+				$buttonmessage = "Acceder";
+				echo "<tr class='info'>";
 			}
 		echo "<td>";
 		echo $listedps["dps_debut_poste"];
@@ -103,10 +141,15 @@ if ($_SESSION['privilege'] != "admin") { header("Location: accueil.php"); }else{
 		echo "</td><td>";
 		echo $listedps["description_manif"];
 		echo "</td><td>";
-		if($validation == false){
+		if($refus == true){
+			echo "Refusé";
+		}elseif($validation_ec == true){
 			echo "En attente";
+		}elseif($validation_ec == false && $validation == true){
+			echo $listedps["valid_demande_dps"];
 		}else{
-		echo $listedps["valid_demande_rt"];}
+			echo "Non envoyé";
+		}
 		echo "</td><td>";
 		echo "<form role='form' action=".$urlform." method='post'>";
 		echo "<input type='hidden' name='id' value='".$listedps["id"]."'>";
@@ -125,7 +168,8 @@ if ($_SESSION['privilege'] != "admin") { header("Location: accueil.php"); }else{
 		<?php
 		}else{
 		if(isset($_GET['commune'])){
-		$pageget = "?commune=".$commune."&page=".$i;}else{
+		$pageget = "?commune=".$commune."&page=".$i;}elseif(isset($_GET['filter'])){
+		$pageget = "?filter=".$filter."&page=".$i;}else{
 		$pageget = "?page=".$i;}
 		echo "<li><a href='list-dps.php".$pageget."'>".$i."</a></li>";
 		}}

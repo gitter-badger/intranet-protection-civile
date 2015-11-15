@@ -21,21 +21,46 @@ $query = "SELECT * FROM demande_dps WHERE id = '$id'";
 $dps_result = mysqli_query($link, $query);
 $dps = mysqli_fetch_array($dps_result);
 $cu = $dps['cu_complet'];
-unset($_SESSION['dps_update']);
+unset($_SESSION['dps-update']);
 }else{header("Location: list-dps.php"); exit;}
+
+$pathy = $dps['annee_poste'];
+$pathyear = "20".$pathy;
+$pathcode_commune = $dps['commune_ris'];
+$pathquery = "SELECT nomcode,numero FROM commune WHERE numero=$pathcode_commune";
+$pathcommune_result = mysqli_query($link, $pathquery);
+$pathcommune_array = mysqli_fetch_array($pathcommune_result);
+$pathantenne = $pathcommune_array["nomcode"];
+$pathnum_cu = $dps['num_cu'];
+
+$pathfile = "documents_dps/".$pathyear."/".$pathantenne."/".$pathnum_cu."/";
+$pathfileconvention = $pathfile.$cu."-CONV.pdf";
+$pathfilerisk = $pathfile."/".$cu."-RISK.pdf";
+$pathfiledemande = $pathfile."/".$cu."-DEM.pdf";
+if(file_exists($pathfileconvention)){$fileconvention = true;}else{$fileconvention = false;}
+if(file_exists($pathfilerisk)){$filerisk = true;}else{$filerisk = false;}
+if(file_exists($pathfiledemande)){$filedemande = true;}else{$filedemande = false;}
+
 ?>
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Demande DPS</title>
+	<title>Modification DPS - <?php echo $cu;?></title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<link rel="stylesheet" href="css/bootstrap.min.css" type="text/css" media="all" title="no title" charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=no">
 	<link href="css/fileinput.css" media="all" rel="stylesheet" type="text/css" />
-	<script src="js/fileinput.js" type="text/javascript"></script>
+	<link href="css/bootstrap-datetimepicker.min.css" media="all" rel="stylesheet" type="text/css" />
 </head>
 <body>
 <?php include 'header.php'; ?>
+<script type="text/javascript" src="js/moment.js"></script>
+<script src="js/moment-with-locales.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/bootstrap-datetimepicker.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/fr.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/fileinput.min.js" type="text/javascript"></script>
+<script src="js/fileinput_locale_fr.js" type="text/javascript"></script>
+<script src="js/bootstrap.file-input.js" type="text/javascript"></script>
 <div class="container">
 		<?php if ($_SESSION['privilege'] == "admin") {?>
 			<h2>Formulaire : Demande de DPS</h2>
@@ -49,35 +74,207 @@ unset($_SESSION['dps_update']);
 						<h3 class="panel-title">Accès spécial DDO</h3>
 					</div>
 				<div class="panel-body">
-					Formulaire de validation ou refus.
+					<div class="form-group form-group-sm">
+					<form class="form-horizontal" role="form" action="traitement-demande-dps.php" method="post">
+						<input type='hidden' name='demande_valid' value='<?php echo $dps['id'];?>'>
+						<div class="form-group">
+							<div class="col-sm-4">
+								<button type="submit" class="btn btn-success" <?php if($dps['valid_demande_rt'] !=0){echo "disabled";}?>>Envoyer en validation</button>
+							</div>
+					</form>
+					<form class="form-horizontal" role="form" action="traitement-demande-dps.php" method="post">
+						<input type='hidden' name='valider' value='<?php echo $dps['id'];?>'>
+							<div class="col-sm-4">
+								<button type="submit" class="btn btn-success" <?php if($dps['valid_demande_rt'] ==0){echo "disabled";}?>>Valider la demande de DPS</button>
+						    </div>
+					</form>
+					<div class="col-sm-4">
+						<button type="button" class="btn btn-danger" data-toggle="modal" data-target="#ModalRefus" <?php if($dps['valid_demande_rt'] ==0){echo "disabled";}?>>Refuser la demande de DPS</button>
+					</div>
+						</div>
+					</div>
 				</div>
 			</div>
-			<?php }?>
+			<?php }
+			if($dps['etat_demande_dps'] == "2"){
+			?>
+			<div class="panel panel-danger">
+				<div class="panel-heading">
+					<h3 class="panel-title">Demande <strong>refusée</strong> par la Direction Départementale des Opérations</h3>
+				</div>
+				<div class="panel-body">
+					<h4>Motif de refus :</h4>
+					<blockquote>
+						<p><?php echo $dps['motif_annul'];?></p>
+					</blockquote>
+					<h4>Détails :</h4>
+					<blockquote>
+						<p><?php echo $dps['administration'];?></p>
+					</blockquote>
+				</div>
+			</div>
+			<?php } ?>
 			<div class="panel panel-default">
 					<div class="panel-heading">
-						<h3 class="panel-title">Gestion des fichiers</h3>
+						<h3 class="panel-title">Gestion des fichiers <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Seuls les fichiers au format PDF sont acceptés"></span></h3>
 					</div>
-				<div class="panel-body">
-					<form enctype="multipart/form-data">
-					<div class="form-group">
-						<input id="input-risk" type="file" accept="application/pdf" data-preview-file-type="any">
-							<script>
-							$("#input-risk").fileinput({
-							previewFileType: "image",
-							browseClass: "btn btn-success",
-							browseLabel: "Pick Image",
-							browseIcon: '<i class="glyphicon glyphicon-picture"></i>',
-							removeClass: "btn btn-danger",
-							removeLabel: "Delete",
-							removeIcon: '<i class="glyphicon glyphicon-trash"></i>',
-							uploadClass: "btn btn-info",
-							uploadLabel: "Upload",
-							uploadIcon: '<i class="glyphicon glyphicon-upload"></i>',
-							});
-							</script>
+				<ul class="list-group">
+					<li class="list-group-item">
+				<div class="row" id="rowconvention" <?php if($fileconvention == true){echo "hidden";} ?>>
+					<form action="#" class="upload1">
+						<div class="form-group form-groupe-sm">
+						<div class="col-sm-4">
+							<input type="file" name="image" id="input_convention" accept="application/pdf" title="Ajouter la convention <span class='glyphicon glyphicon-folder-open'></span>" data-filename-placement="inside">
+						</div>
+						<div class="col-sm-4">
+							<button class="btn btn-sm btn-info upload" id="submit_convention" type="submit">Envoyer <span class="glyphicon glyphicon-upload"></span></button>
+							<button type="button" class="btn btn-sm btn-danger cancel">Annuler <span class="glyphicon glyphicon-trash"></span></button>
+						</div>
+						<div class="col-sm-4">
+						<div class="progress progress-striped active">
+							<div class="progress-bar" style="width:0%"></div>
+							<?php
+											echo "<input type='hidden' name='year' value='".$pathyear."'>";
+											echo "<input type='hidden' name='antenne' value='".$pathantenne."'>";
+											echo "<input type='hidden' name='num_cu' value='".$pathnum_cu."'>";
+											echo "<input type='hidden' name='type' value='convention'>";
+											echo "<input type='hidden' name='cu' value='".$cu."'>";
+							?>
+						</div>
+						</div>
 						</div>
 					</form>
 				</div>
+				<?php if($fileconvention == true){?>
+				<div class="row" id="changeconvention">
+				<div class="form-group form-groupe-sm">
+					<div class="col-sm-4">
+					<a href="<?php echo $pathfileconvention?>" class="btn btn-primary" target="_blank">Télécharger la convention <span class="glyphicon glyphicon-download-alt"></span></a>
+					</div>
+					<div class="col-sm-4">
+					<button id="changeconv" type="button" class="btn btn-danger">Envoyer une nouvelle convention <span class="glyphicon glyphicon-trash"></span></button>
+					</div>
+				</div>
+				</div>
+				<?php } ?>
+				</li>
+				<li class="list-group-item">
+				<div class="row" id="rowrisque" <?php if($filerisk == true){echo "hidden";} ?>>
+					<form action="#" class="upload2">
+						<div class="form-group form-groupe-sm">
+						<div class="col-sm-4">
+							<input type="file" name="image" id="input_risk" accept="application/pdf" title="Ajouter la Grille des risques <span class='glyphicon glyphicon-folder-open'></span>" data-filename-placement="inside">
+						</div>
+						<div class="col-sm-4">
+							<button class="btn btn-sm btn-info upload" id="submit_risk" type="submit">Envoyer <span class="glyphicon glyphicon-upload"></span></button>
+							<button type="button" class="btn btn-sm btn-danger cancel">Annuler <span class="glyphicon glyphicon-trash"></span></button>
+						</div>
+						<div class="col-sm-4">
+						<div class="progress progress-striped active">
+							<div class="progress-bar" style="width:0%"></div>
+							<?php
+											echo "<input type='hidden' name='year' value='".$pathyear."'>";
+											echo "<input type='hidden' name='antenne' value='".$pathantenne."'>";
+											echo "<input type='hidden' name='num_cu' value='".$pathnum_cu."'>";
+											echo "<input type='hidden' name='type' value='risk'>";
+											echo "<input type='hidden' name='cu' value='".$cu."'>";
+							?>
+						</div>
+						</div>
+						</div>
+					</form>
+				</div>
+				<?php if($filerisk == true){?>
+				<div class="row" id="changerisque">
+				<div class="form-group form-groupe-sm">
+					<div class="col-sm-4">
+					<a href="<?php echo $pathfilerisk?>" class="btn btn-primary" target="_blank">Télécharger la grille des risques <span class="glyphicon glyphicon-download-alt"></span></a>
+					</div>
+					<div class="col-sm-4">
+					<button id="changerisk" type="button" class="btn btn-danger">Envoyer une nouvelle grille des risques <span class="glyphicon glyphicon-trash"></span></button>
+					</div>
+				</div>
+				</div>
+				<?php } ?>
+				</li>
+				<li class="list-group-item">
+				<div class="row" id="rowdemande" <?php if($filedemande == true){echo "hidden";} ?>>
+					<form action="#" class="upload3">
+						<div class="form-group form-groupe-sm">
+						<div class="col-sm-4">
+							<input type="file" name="image" id="input_demande" accept="application/pdf" title="Ajouter la demande <span class='glyphicon glyphicon-folder-open'></span>" data-filename-placement="inside">
+						</div>
+						<div class="col-sm-4">
+							<button class="btn btn-sm btn-info upload" id="submit_demande" type="submit">Envoyer <span class="glyphicon glyphicon-upload"></span></button>
+							<button type="button" class="btn btn-sm btn-danger cancel">Annuler <span class="glyphicon glyphicon-trash"></span></button>
+						</div>
+						<div class="col-sm-4">
+						<div class="progress progress-striped active">
+							<div class="progress-bar" style="width:0%"></div>
+							<?php
+											echo "<input type='hidden' name='year' value='".$pathyear."'>";
+											echo "<input type='hidden' name='antenne' value='".$pathantenne."'>";
+											echo "<input type='hidden' name='num_cu' value='".$pathnum_cu."'>";
+											echo "<input type='hidden' name='type' value='demande'>";
+											echo "<input type='hidden' name='cu' value='".$cu."'>";
+							?>
+						</div>
+						</div>
+						</div>
+					</form>
+				</div>
+				<?php if($filedemande == true){?>
+				<div class="row" id="changedemande">
+				<div class="form-group form-groupe-sm">
+					<div class="col-sm-4">
+					<a href="<?php echo $pathfiledemande?>" class="btn btn-primary" target="_blank">Télécharger la demande de DPS <span class="glyphicon glyphicon-download-alt"></span></a>
+					</div>
+					<div class="col-sm-4">
+					<button id="changedem" type="button" class="btn btn-danger">Envoyer une nouvelle demande de DPS <span class="glyphicon glyphicon-trash"></span></button>
+					</div>
+				</div>
+				</div>
+				<?php } ?>
+				</li>
+				<li class="list-group-item">
+				<div class="row">
+					<form action="#" class="upload4">
+						<div class="form-group form-groupe-sm">
+						<div class="col-sm-4">
+							<input type="file" name="image" id="input_demande" accept="application/pdf" title="Ajouter un autre document <span class='glyphicon glyphicon-folder-open'></span>" data-filename-placement="inside">
+						</div>
+						<div class="col-sm-4">
+							<button class="btn btn-sm btn-info upload" id="submit_autre" type="submit">Envoyer <span class="glyphicon glyphicon-upload"></span></button>
+							<button type="button" class="btn btn-sm btn-danger cancel">Annuler <span class="glyphicon glyphicon-trash"></span></button>
+						</div>
+						<div class="col-sm-4">
+						<div class="progress progress-striped active">
+							<div class="progress-bar" style="width:0%"></div>
+							<?php
+											echo "<input type='hidden' name='year' value='".$pathyear."'>";
+											echo "<input type='hidden' name='antenne' value='".$pathantenne."'>";
+											echo "<input type='hidden' name='num_cu' value='".$pathnum_cu."'>";
+											echo "<input type='hidden' name='type' value='autre'>";
+											echo "<input type='hidden' name='cu' value='".$cu."'>";
+							?>
+						</div>
+						</div>
+						</div>
+					</form>
+				</div>
+				<div id="row">
+				<?php
+				$pdf = glob($pathfile.'autre/*.{pdf}', GLOB_BRACE);
+				foreach($pdf as $otherfiles){
+				echo "<p><a href='$otherfiles' target='_blank'><span class='glyphicon glyphicon-file'></span> ".basename($otherfiles)."</a></p>";}
+				?>
+				</div>
+				</li>
+				</ul>
+							<script>
+								$('input[type=file]').bootstrapFileInput();
+								$('.file-inputs').bootstrapFileInput();
+							</script>
 			</div>
 			
 			<form class="form-horizontal" role="form" action="traitement-demande-dps.php" method="post">
@@ -88,43 +285,43 @@ unset($_SESSION['dps_update']);
 					</div>
 				<div class="panel-body">
 					<div class="form-group form-group-sm">
-						<label for="nom_organisation" class="col-sm-4 control-label">Nom de l'organisation <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Nom de la société, association, collectivité, etc."></span></label>
+						<label for="nom_organisation" class="col-sm-4 control-label">Nom de l'organisation <span class="glyphicon glyphicon-info-sign" rel="popover" data-trigger="hover" data-toggle="popover" data-content="Nom de la société, association, collectivité, etc."></span></label>
 						<div class="col-sm-8">
 							<input type="text" class="form-control" id="nom_organisation" name="nom_organisation" placeholder="Nom de l'organisation" value="<?php echo $dps['organisateur']; ?>">
 						</div>
 					</div>
 					<div class="form-group form-group-sm">
-						<label for="represente_par" class="col-sm-4 control-label">Représenté par <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Personne qui représente l'organisation."></span></label>
+						<label for="represente_par" class="col-sm-4 control-label">Représenté par <span class="glyphicon glyphicon-info-sign" rel="popover" data-trigger="hover" data-toggle="popover" data-content="Personne qui représente l'organisation."></span></label>
 						<div class="col-sm-8">
 							<input type="text" class="form-control" id="represente_par" name="represente_par" placeholder="Représentant" value="<?php echo $dps['representant_org']; ?>">
 						</div>
 					</div>
 					<div class="form-group form-group-sm">
-						<label for="qualite" class="col-sm-4 control-label">Qualité <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Statut du représentant."></span></label>
+						<label for="qualite" class="col-sm-4 control-label">Qualité <span class="glyphicon glyphicon-info-sign" rel="popover" data-trigger="hover" data-toggle="popover" data-content="Statut du représentant."></span></label>
 						<div class="col-sm-8">
 							<input type="text" class="form-control" id="qualite" name="qualite" placeholder="Qualité" value="<?php echo $dps['qualite_org'];?>">
 						</div>
 					</div>
 					<div class="form-group form-group-sm">
-						<label for="adresse" class="col-sm-4 control-label">Adresse postale <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Adresse, code postale, ville."></span></label>
+						<label for="adresse" class="col-sm-4 control-label">Adresse postale <span class="glyphicon glyphicon-info-sign" rel="popover" data-trigger="hover" data-toggle="popover" data-content="Adresse, code postale, ville."></span></label>
 						<div class="col-sm-8">
 							<input type="text" class="form-control" id="adresse" name="adresse" placeholder="Adresse" value="<?php echo $dps['adresse_org'];?>">
 						</div>
 					</div>
 					<div class="form-group form-group-sm">
-						<label for="telephone" class="col-sm-4 control-label">Téléphone <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Format 0XXXXXXXXX"></span></label>
+						<label for="telephone" class="col-sm-4 control-label">Téléphone <span class="glyphicon glyphicon-info-sign" rel="popover" data-trigger="hover" data-toggle="popover" data-content="Format 0XXXXXXXXX"></span></label>
 						<div class="col-sm-8">
 							<input type="tel" class="form-control" id="telephone" name="telephone" placeholder="telephone" value="<?php echo $dps['tel_org'];?>">
 						</div>
 					</div>
 					<div class="form-group form-group-sm">
-						<label for="fax" class="col-sm-4 control-label">Fax <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Format 0XXXXXXXXX"></span></label>
+						<label for="fax" class="col-sm-4 control-label">Fax <span class="glyphicon glyphicon-info-sign" rel="popover" data-toggle="popover" data-trigger="hover" data-content="Format 0XXXXXXXXX"></span></label>
 						<div class="col-sm-8">
 							<input type="tel" class="form-control" id="fax" name="fax" placeholder="Fax" value="<?php echo $dps['fax_org'];?>">
 						</div>
 					</div>
 					<div class="form-group form-group-sm">
-						<label for="email" class="col-sm-4 control-label">E-mail <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Adresse e-mail du représentant ou de l'organisation."></span></label>
+						<label for="email" class="col-sm-4 control-label">E-mail <span class="glyphicon glyphicon-info-sign" rel="popover" data-toggle="popover" data-trigger="hover" data-content="Adresse e-mail du représentant ou de l'organisation."></span></label>
 						<div class="col-sm-8">
 							<input type="email" class="form-control" id="email" name="email" placeholder="E-mail" value="<?php echo $dps['email_org'];?>">
 						</div>
@@ -166,148 +363,106 @@ unset($_SESSION['dps_update']);
 						<div class="form-group form-group-sm form-inline row">
 							<label for="date_debut" class="col-sm-4 control-label">Date et heure du début</label>
 							<div class="col-sm-6">
-								<select class="form-control" id="jour_debut" name="date_debut">
-									<?php
-									$date_debut = $dps['dps_debut'];
-									$jour_debut = substr($date_debut,-2);
-									$mois_debut = substr($date_debut,5,7);
-									$annee_debut = substr($date_debut,0,4);
-								$i = 1;
-								while($i <= 31){
-									if($i == $jour_debut){
-								echo "<option value='".$i."' selected>".$i."</option>";
-								}else{
-									echo "<option value='".$i."'>".$i."</option>";
-								}
-								$i++;
-								}
-								?>
-								</select>
-								<select class="form-control" id="mois_debut" name="date_debut">
-									<option value="1" <?php if($mois_debut == 1){echo "selected";}?>>Janvier</option>
-									<option value="2" <?php if($mois_debut == 2){echo "selected";}?>>Février</option>
-									<option value="3" <?php if($mois_debut == 3){echo "selected";}?>>Mars</option>
-									<option value="4" <?php if($mois_debut == 4){echo "selected";}?>>Avril</option>
-									<option value="5" <?php if($mois_debut == 5){echo "selected";}?>>Mai</option>
-									<option value="6" <?php if($mois_debut == 6){echo "selected";}?>>Juin</option>
-									<option value="7" <?php if($mois_debut == 7){echo "selected";}?>>Juillet</option>
-									<option value="8" <?php if($mois_debut == 8){echo "selected";}?>>Août</option>
-									<option value="9" <?php if($mois_debut == 9){echo "selected";}?>>Septembre</option>
-									<option value="10" <?php if($mois_debut == 10){echo "selected";}?>>Octobre</option>
-									<option value="11" <?php if($mois_debut == 11){echo "selected";}?>>Novembre</option>
-									<option value="12" <?php if($mois_debut == 12){echo "selected";}?>>Décembre</option>
-								</select>
-								<select class="form-control" id="annee_debut" name="date_debut">
-									<option value="<?php echo date("Y") ?>"<?php if($annee_debut == date("Y")){echo "selected";}?>><?php echo date("Y") ?></option>
-									<option value="<?php echo date("Y")+1 ?>"<?php if($annee_debut == date("Y")+1){echo "selected";}?>><?php echo date("Y")+1 ?></option>
-									<option value="<?php echo date("Y")+2 ?>"<?php if($annee_debut == date("Y")+2){echo "selected";}?>><?php echo date("Y")+2 ?></option>
-									<option value="<?php echo date("Y")+3 ?>"<?php if($annee_debut == date("Y")+3){echo "selected";}?>><?php echo date("Y")+3 ?></option>
-								</select>
+								<div class='input-group date' id='date_debut' name="date_debut">
+								<input type='text' class="form-control" id='date_debut' name="date_debut"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-calendar"></span>
+									</span>
+								</div>
 							</div>
 							<div class="col-sm-2">
-								<select class="form-control" id="h_debut" name="date_debut">
-									<?php
-									$heure_debut = $dps['heure_debut'];
-									$m_debut = substr($heure_debut,-2);
-									$h_debut = substr($heure_debut,0,2);
-								$i = 00;
-								while($i <= 23){
-									if($i == $h_debut){
-								echo "<option value='".$i."' selected>".$i."</option>";
-								}else{
-									echo "<option value='".$i."'>".$i."</option>";
-								}
-								$i++;
-								}
-								?>
-								</select>
-								<select class="form-control" id="m_debut" name="date_debut">
-									<?php 
-								$i = 00;
-								while($i <= 59){
-									if($i == $m_debut){
-										echo "<option value='".$i."' selected>".$i."</option>";
-										}else{
-											echo "<option value='".$i."'>".$i."</option>";
-										}
-										$i++;
-										}
-								?>
-								</select>
+								<div class='input-group date' id='heure_debut' name="heure_debut">
+								<input type='text' class="form-control" id='heure_debut' name="heure_debut"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-time"></span>
+									</span>
+								</div>
 							</div>
+							<script type="text/javascript">
+							$(function () {
+								$('#date_debut').datetimepicker({
+									locale: 'fr',
+									format: 'YYYY-MM-DD',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom',
+									defaultDate:'<?php $dps_debut = $dps['dps_debut'];
+									if($dps_debut == 0000-00-00){$dps_debut = "2015-01-01";}
+									echo $dps_debut;?>'
+								});
+							});
+							$(function () {
+								$('#heure_debut').datetimepicker({
+									locale: 'fr',
+									format: 'HHmm',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom',
+									useCurrent:false,
+									stepping:'5',
+									defaultDate:'<?php $heure_debut = $dps['heure_debut'];
+									if(empty($heure_debut)){$iso_heure_debut = "00:00";}else{
+									$h_debut = substr($heure_debut,0,-2);
+									$m_debut = substr($heure_debut,-2);
+									$iso_heure_debut = $h_debut.':'.$m_debut.':00';}
+									echo $dps_debut.' '.$iso_heure_debut;
+									?>'
+								});
+							});
+							</script>
 						</div>
 						<div class="form-group form-group-sm form-inline row">
-							<label for="date_fin" class="col-sm-4 control-label">Date et heure de fin</label>
+							<label for="date_debut" class="col-sm-4 control-label">Date et heure de fin de poste</label>
 							<div class="col-sm-6">
-								<select class="form-control" id="jour_fin" name="date_fin">
-									<?php
-									$date_fin = $dps['dps_fin'];
-									$jour_fin = substr($date_fin,-2);
-									$mois_fin = substr($date_fin,5,7);
-									$annee_fin = substr($date_fin,0,4);
-								$i = 1;
-								while($i <= 31){
-									if($i == $jour_fin){
-								echo "<option value='".$i."' selected>".$i."</option>";
-								}else{
-									echo "<option value='".$i."'>".$i."</option>";
-								}
-								$i++;
-								}
-								?>
-								</select>
-								<select class="form-control" id="mois_fin" name="date_fin">
-									<option value="1" <?php if($mois_fin == 1){echo "selected";}?>>Janvier</option>
-									<option value="2" <?php if($mois_fin == 2){echo "selected";}?>>Février</option>
-									<option value="3" <?php if($mois_fin == 3){echo "selected";}?>>Mars</option>
-									<option value="4" <?php if($mois_fin == 4){echo "selected";}?>>Avril</option>
-									<option value="5" <?php if($mois_fin == 5){echo "selected";}?>>Mai</option>
-									<option value="6" <?php if($mois_fin == 6){echo "selected";}?>>Juin</option>
-									<option value="7" <?php if($mois_fin == 7){echo "selected";}?>>Juillet</option>
-									<option value="8" <?php if($mois_fin == 8){echo "selected";}?>>Août</option>
-									<option value="9" <?php if($mois_fin == 9){echo "selected";}?>>Septembre</option>
-									<option value="10" <?php if($mois_fin == 10){echo "selected";}?>>Octobre</option>
-									<option value="11" <?php if($mois_fin == 11){echo "selected";}?>>Novembre</option>
-									<option value="12" <?php if($mois_fin == 12){echo "selected";}?>>Décembre</option>
-								</select>
-								<select class="form-control" id="annee_fin" name="date_fin">
-									<option value="<?php echo date("Y") ?>"<?php if($annee_fin == date("Y")){echo "selected";}?>><?php echo date("Y") ?></option>
-									<option value="<?php echo date("Y")+1 ?>"<?php if($annee_fin == date("Y")+1){echo "selected";}?>><?php echo date("Y")+1 ?></option>
-									<option value="<?php echo date("Y")+2 ?>"<?php if($annee_fin == date("Y")+2){echo "selected";}?>><?php echo date("Y")+2 ?></option>
-									<option value="<?php echo date("Y")+3 ?>"<?php if($annee_fin == date("Y")+3){echo "selected";}?>><?php echo date("Y")+3 ?></option>
-								</select>
+								<div class='input-group date' id='date_fin' name="date_fin">
+								<input type='text' class="form-control" id='date_fin' name="date_fin"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-calendar"></span>
+									</span>
+								</div>
 							</div>
 							<div class="col-sm-2">
-								<select class="form-control" id="h_fin" name="date_fin">
-									<?php
-									$heure_fin = $dps['heure_fin'];
-									$m_fin = substr($heure_fin,-2);
-									$h_fin = substr($heure_fin,0,2);
-								$i = 00;
-								while($i <= 23){
-									if($i == $h_fin){
-								echo "<option value='".$i."' selected>".$i."</option>";
-								}else{
-									echo "<option value='".$i."'>".$i."</option>";
-								}
-								$i++;
-								}
-								?>
-								</select>
-								<select class="form-control" id="m_fin" name="date_fin">
-									<?php 
-								$i = 00;
-								while($i <= 59){
-									if($i == $m_fin){
-										echo "<option value='".$i."' selected>".$i."</option>";
-										}else{
-											echo "<option value='".$i."'>".$i."</option>";
-										}
-										$i++;
-										}
-								?>
-								</select>
+								<div class='input-group date' id='heure_fin' name="heure_fin">
+								<input type='text' class="form-control" id='heure_fin' name="heure_fin"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-time"></span>
+									</span>
+								</div>
 							</div>
+							<script type="text/javascript">
+							$(function () {
+								$('#date_fin').datetimepicker({
+									locale: 'fr',
+									format: 'YYYY-MM-DD',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom',
+									defaultDate:'<?php $dps_fin = $dps['dps_fin'];
+									if($dps_fin == "0000-00-00"){$dps_fin = "2015-01-01";}
+									echo $dps_fin;?>'
+					
+								});
+							});
+							$(function () {
+								$('#heure_fin').datetimepicker({
+									locale: 'fr',
+									format: 'HHmm',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom',
+									useCurrent:false,
+									stepping:'5',
+									defaultDate:'<?php $heure_fin = $dps['heure_fin'];
+									if(empty($heure_fin)){$iso_heure_fin = "00:00";}else{
+									$h_fin = substr($heure_fin,0,-2);
+									$m_fin = substr($heure_fin,-2);
+									$iso_heure_fin = $h_fin.':'.$m_fin.':00';}
+									echo $dps_fin.' '.$iso_heure_fin;
+									?>'
+					
+								});
+							});
+							</script>
 						</div>
 						<div class="form-group form-group-sm">
 							<label for="departement" class="col-sm-4 control-label">Département où se situe la manifestation <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Exemple : 92"></span></label>
@@ -391,150 +546,108 @@ unset($_SESSION['dps_update']);
 					</div>
 					<div class="panel-body">
 						<div class="form-group form-group-sm form-inline row">
-							<label for="date_debut" class="col-sm-4 control-label">Date et heure du fin du poste</label>
+							<label for="date_debut_poste" class="col-sm-4 control-label">Date et heure du début de poste</label>
 							<div class="col-sm-6">
-								<select class="form-control" id="jour_debut_poste" name="date_debut_poste">
-									<?php
-									$date_debut_poste = $dps['dps_debut_poste'];
-									$jour_debut_poste = substr($date_debut_poste,-2);
-									$mois_debut_poste = substr($date_debut_poste,5,7);
-									$annee_debut_poste = substr($date_debut_poste,0,4);
-								$i = 1;
-								while($i <= 31){
-									if($i == $jour_debut_poste){
-								echo "<option value='".$i."' selected>".$i."</option>";
-								}else{
-									echo "<option value='".$i."'>".$i."</option>";
-								}
-								$i++;
-								}
-								?>
-								</select>
-								<select class="form-control" id="mois_debut_poste" name="date_debut_poste">
-									<option value="1" <?php if($mois_debut_poste == 1){echo "selected";}?>>Janvier</option>
-									<option value="2" <?php if($mois_debut_poste == 2){echo "selected";}?>>Février</option>
-									<option value="3" <?php if($mois_debut_poste == 3){echo "selected";}?>>Mars</option>
-									<option value="4" <?php if($mois_debut_poste == 4){echo "selected";}?>>Avril</option>
-									<option value="5" <?php if($mois_debut_poste == 5){echo "selected";}?>>Mai</option>
-									<option value="6" <?php if($mois_debut_poste == 6){echo "selected";}?>>Juin</option>
-									<option value="7" <?php if($mois_debut_poste == 7){echo "selected";}?>>Juillet</option>
-									<option value="8" <?php if($mois_debut_poste == 8){echo "selected";}?>>Août</option>
-									<option value="9" <?php if($mois_debut_poste == 9){echo "selected";}?>>Septembre</option>
-									<option value="10" <?php if($mois_debut_poste == 10){echo "selected";}?>>Octobre</option>
-									<option value="11" <?php if($mois_debut_poste == 11){echo "selected";}?>>Novembre</option>
-									<option value="12" <?php if($mois_debut_poste == 12){echo "selected";}?>>Décembre</option>
-								</select>
-								<select class="form-control" id="annee_debut_poste" name="date_debut_poste">
-									<option value="<?php echo date("Y") ?>"<?php if($annee_debut_poste == date("Y")){echo "selected";}?>><?php echo date("Y") ?></option>
-									<option value="<?php echo date("Y")+1 ?>"<?php if($annee_debut_poste == date("Y")+1){echo "selected";}?>><?php echo date("Y")+1 ?></option>
-									<option value="<?php echo date("Y")+2 ?>"<?php if($annee_debut_poste == date("Y")+2){echo "selected";}?>><?php echo date("Y")+2 ?></option>
-									<option value="<?php echo date("Y")+3 ?>"<?php if($annee_debut_poste == date("Y")+3){echo "selected";}?>><?php echo date("Y")+3 ?></option>
-								</select>
+								<div class='input-group date' id='date_debut_poste' name="date_debut_poste">
+								<input type='text' class="form-control" id='date_debut_poste' name="date_debut_poste"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-calendar"></span>
+									</span>
+								</div>
 							</div>
 							<div class="col-sm-2">
-								<select class="form-control" id="h_debut_poste" name="date_debut_poste">
-									<?php
-									$heure_debut_poste = $dps['heure_debut_poste'];
-									$m_debut_poste = substr($heure_debut_poste,-2);
-									$h_debut_poste = substr($heure_debut_poste,0,2);
-								$i = 00;
-								while($i <= 23){
-									if($i == $h_debut_poste){
-								echo "<option value='".$i."' selected>".$i."</option>";
-								}else{
-									echo "<option value='".$i."'>".$i."</option>";
-								}
-								$i++;
-								}
-								?>
-								</select>
-								<select class="form-control" id="m_debut_poste" name="date_debut_poste">
-									<?php 
-								$i = 00;
-								while($i <= 59){
-									if($i == $m_debut_poste){
-										echo "<option value='".$i."' selected>".$i."</option>";
-										}else{
-											echo "<option value='".$i."'>".$i."</option>";
-										}
-										$i++;
-										}
-								?>
-								</select>
+								<div class='input-group date' id='heure_debut_poste' name="heure_debut_poste">
+								<input type='text' class="form-control" id='heure_debut_poste' name="heure_debut_poste"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-time"></span>
+									</span>
+								</div>
 							</div>
+							<script type="text/javascript">
+							$(function () {
+								$('#date_debut_poste').datetimepicker({
+									locale: 'fr',
+									format: 'YYYY-MM-DD',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom',
+									defaultDate:'<?php $dps_debut_poste = $dps['dps_debut_poste'];
+									if($dps_debut_poste == 0000-00-00){$dps_debut_poste = "2015-01-01";}
+									echo $dps_debut_poste;?>'
+								});
+							});
+							$(function () {
+								$('#heure_debut_poste').datetimepicker({
+									locale: 'fr',
+									format: 'HHmm',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom',
+									useCurrent:false,
+									stepping:'5',
+									defaultDate:'<?php $heure_debut_poste = $dps['heure_debut_poste'];
+									if(empty($heure_debut_poste)){$iso_heure_debut_poste = "00:00";}else{
+									$h_debut_poste = substr($heure_debut_poste,0,-2);
+									$m_debut_poste = substr($heure_debut_poste,-2);
+									$iso_heure_debut_poste = $h_debut_poste.':'.$m_debut_poste.':00';}
+									echo $dps_debut_poste.' '.$iso_heure_debut_poste;
+									?>'
+								});
+							});
+							</script>
 						</div>
 						<div class="form-group form-group-sm form-inline row">
-							<label for="date_fin" class="col-sm-4 control-label">Date et heure de fin du poste</label>
+							<label for="date_debut_poste" class="col-sm-4 control-label">Date et heure de fin de poste</label>
 							<div class="col-sm-6">
-								<select class="form-control" id="jour_fin_poste" name="date_fin_poste">
-									<?php
-									$date_fin_poste = $dps['dps_fin_poste'];
-									$jour_fin_poste = substr($date_fin_poste,-2);
-									$mois_fin_poste = substr($date_fin_poste,5,7);
-									$annee_fin_poste = substr($date_fin_poste,0,4);
-								$i = 1;
-								while($i <= 31){
-									if($i == $jour_fin_poste){
-								echo "<option value='".$i."' selected>".$i."</option>";
-								}else{
-									echo "<option value='".$i."'>".$i."</option>";
-								}
-								$i++;
-								}
-								?>
-								</select>
-								<select class="form-control" id="mois_fin_poste" name="date_fin_poste">
-									<option value="1" <?php if($mois_fin_poste == 1){echo "selected";}?>>Janvier</option>
-									<option value="2" <?php if($mois_fin_poste == 2){echo "selected";}?>>Février</option>
-									<option value="3" <?php if($mois_fin_poste == 3){echo "selected";}?>>Mars</option>
-									<option value="4" <?php if($mois_fin_poste == 4){echo "selected";}?>>Avril</option>
-									<option value="5" <?php if($mois_fin_poste == 5){echo "selected";}?>>Mai</option>
-									<option value="6" <?php if($mois_fin_poste == 6){echo "selected";}?>>Juin</option>
-									<option value="7" <?php if($mois_fin_poste == 7){echo "selected";}?>>Juillet</option>
-									<option value="8" <?php if($mois_fin_poste == 8){echo "selected";}?>>Août</option>
-									<option value="9" <?php if($mois_fin_poste == 9){echo "selected";}?>>Septembre</option>
-									<option value="10" <?php if($mois_fin_poste == 10){echo "selected";}?>>Octobre</option>
-									<option value="11" <?php if($mois_fin_poste == 11){echo "selected";}?>>Novembre</option>
-									<option value="12" <?php if($mois_fin_poste == 12){echo "selected";}?>>Décembre</option>
-								</select>
-								<select class="form-control" id="annee_fin_poste" name="date_fin_poste">
-									<option value="<?php echo date("Y") ?>"<?php if($annee_fin_poste == date("Y")){echo "selected";}?>><?php echo date("Y") ?></option>
-									<option value="<?php echo date("Y")+1 ?>"<?php if($annee_fin_poste == date("Y")+1){echo "selected";}?>><?php echo date("Y")+1 ?></option>
-									<option value="<?php echo date("Y")+2 ?>"<?php if($annee_fin_poste == date("Y")+2){echo "selected";}?>><?php echo date("Y")+2 ?></option>
-									<option value="<?php echo date("Y")+3 ?>"<?php if($annee_fin_poste == date("Y")+3){echo "selected";}?>><?php echo date("Y")+3 ?></option>
-								</select>
+								<div class='input-group date' id='date_fin_poste' name="date_fin_poste">
+								<input type='text' class="form-control" id='date_fin_poste' name="date_fin_poste"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-calendar"></span>
+									</span>
+								</div>
 							</div>
 							<div class="col-sm-2">
-								<select class="form-control" id="h_fin_poste" name="date_fin_poste">
-									<?php
-									$heure_fin_poste = $dps['heure_fin_poste'];
-									$m_fin_poste = substr($heure_fin_poste,-2);
-									$h_fin_poste = substr($heure_fin_poste,0,2);
-								$i = 00;
-								while($i <= 23){
-									if($i == $h_fin_poste){
-								echo "<option value='".$i."' selected>".$i."</option>";
-								}else{
-									echo "<option value='".$i."'>".$i."</option>";
-								}
-								$i++;
-								}
-								?>
-								</select>
-								<select class="form-control" id="m_fin_poste" name="date_fin_poste">
-									<?php 
-								$i = 00;
-								while($i <= 59){
-									if($i == $m_fin_poste){
-										echo "<option value='".$i."' selected>".$i."</option>";
-										}else{
-											echo "<option value='".$i."'>".$i."</option>";
-										}
-										$i++;
-										}
-								?>
-								</select>
+								<div class='input-group date' id='heure_fin_poste' name="heure_fin_poste">
+								<input type='text' class="form-control" id='heure_fin_poste' name="heure_fin_poste"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-time"></span>
+									</span>
+								</div>
 							</div>
+							<script type="text/javascript">
+							$(function () {
+								$('#date_fin_poste').datetimepicker({
+									locale: 'fr',
+									format: 'YYYY-MM-DD',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom',
+									defaultDate:'<?php $dps_fin_poste = $dps['dps_fin_poste'];
+									if($dps_fin_poste == "0000-00-00"){$dps_fin_poste = "2015-01-01";}
+									echo $dps_fin_poste;?>'
+					
+								});
+							});
+							$(function () {
+								$('#heure_fin_poste').datetimepicker({
+									locale: 'fr',
+									format: 'HHmm',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom',
+									useCurrent:false,
+									stepping:'5',
+									defaultDate:'<?php $heure_fin_poste = $dps['heure_fin_poste'];
+									if(empty($heure_fin_poste)){$iso_heure_fin_poste = "00:00";}else{
+									$h_fin_poste = substr($heure_fin_poste,0,-2);
+									$m_fin_poste = substr($heure_fin_poste,-2);
+									$iso_heure_fin_poste = $h_fin_poste.':'.$m_fin_poste.':00';}
+									echo $dps_fin_poste.' '.$iso_heure_fin_poste;
+									?>'
+					
+								});
+							});
+							</script>
 						</div>
 						<div class="panel panel-default">
 							<div class="panel-heading">Nombre de secouristes / moyens logistiques <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Permet la comparaison avec la grille des risques."></span></div>
@@ -663,12 +776,48 @@ unset($_SESSION['dps_update']);
 				
 				
 				<div class="form-group">
-					<div class="col-sm-offset-4 col-sm-8">
+					<div class="col-sm-4">
 						<button type="submit" class="btn btn-warning">Mettre à jour</button>
+				    </div>
+			</form>
+			<form class="form-horizontal" role="form" action="traitement-demande-dps.php" method="post">
+				<input type='hidden' name='demande_valid' value='<?php echo $dps['id'];?>'>
+					<div class="col-sm-8">
+						<button type="submit" class="btn btn-success" <?php if($dps['valid_demande_rt'] !=0){echo "disabled";}?>>Envoyer en validation</button>
 				    </div>
 				</div>
 			</form>
+
 			
+			
+			
+<!-- Modal -->
+<div class="modal fade" id="ModalRefus" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+			<h4 class="modal-title" id="myModalLabel">Précisez et confirmez</h4>
+			</div>
+		<div class="modal-body">
+			<form role="form" action="traitement-demande-dps.php" method="post">
+				<div class="form-group">
+					<label for="motif_refus" class="control-label">Motif :</label>
+					<input type="text" class="form-control" id="motif_refus" name="motif_refus">
+				</div>
+				<div class="form-group">
+					<label for="commentaire_refus" class="control-label">Commentaire :</label>
+					<textarea class="form-control" id="commentaire_refus" name="commentaire_refus"></textarea>
+				</div>
+				<input type='hidden' name='refus' value='<?php echo $dps['id'];?>'>
+		</div>
+		<div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			<button type="submit" class="btn btn-danger">Refuser</button>
+		</form>
+		</div>
+		</div>
+	</div>
+</div>
 			
 		<?php }if ($_SESSION['privilege'] == "user") { ?>
   		<strong>En tant qu'utilisateur simple vous ne pouvez pas effectuer d'actions</strong> <?php }?>
@@ -677,7 +826,104 @@ unset($_SESSION['dps_update']);
     $(function () {
         $("[rel='tooltip']").tooltip();
     });
+	$(function () {
+		$('[data-toggle="popover"]').popover()
+	})
 </script>
+<script>
+		$('.upload-all').click(function(){
+			//submit all form
+			$('form').submit();
+		});
+
+		$('.cancel-all').click(function(){
+			//submit all form
+			$('form .cancel').click();
+		});
+
+		$(document).on('submit','.upload1',function(e){
+			e.preventDefault();
+			$form = $(this);
+			uploadImage($form);
+
+		});
+		
+		$(document).on('submit','.upload2',function(e){
+			e.preventDefault();
+			$form = $(this);
+			uploadImage($form);
+		});
+		$(document).on('submit','.upload3',function(e){
+			e.preventDefault();
+			$form = $(this);
+			uploadImage($form);
+		});
+		$(document).on('submit','.upload4',function(e){
+			e.preventDefault();
+			$form = $(this);
+			uploadImage($form);
+		});
+
+		function uploadImage($form){
+			$form.find('.progress-bar').removeClass('progress-bar-success')
+										.removeClass('progress-bar-danger');
+
+			var formdata = new FormData($form[0]); //formelement
+			var request = new XMLHttpRequest();
+
+			//progress event...
+			request.upload.addEventListener('progress',function(e){
+				var percent = Math.round(e.loaded/e.total * 100);
+				$form.find('.progress-bar').width(percent+'%').html(percent+'%');
+			});
+
+			//progress completed load event
+			request.addEventListener('load',function(e){
+				$form.find('.progress-bar').addClass('progress-bar-success').html('Veuillez patienter...');
+				//$form.find('.progress').removeClass('progress-striped');
+				
+				
+				
+			});
+
+			request.onreadystatechange = function(){
+				if(request.readyState == 4 && request.status == 200){
+					$form.find('.progress').removeClass('progress-striped');
+					$form.find('.progress-bar').html('Transfert Terminé !');
+					window.setTimeout(function(){location.reload()},2000);
+					
+				}
+			}
+			request.open('POST', 'functions/dps-documents-upload.php', true);
+			request.send(formdata);
+			
+			
+			
+
+			$form.on('click','.cancel',function(){
+				request.abort();
+
+				$form.find('.progress-bar')
+					.addClass('progress-bar-danger')
+					.removeClass('progress-bar-success')
+					.html('upload aborted...');
+			});
+
+		}
+	</script>
+	<script>
+jQuery.fx.off = true
+$("#changeconv").click(function() {
+	$("#rowconvention").removeAttr('hidden')
+	$("#changeconvention").toggle("hidden")});
+$("#changerisk").click(function() {
+	$("#rowrisque").removeAttr('hidden')
+	$("#changerisque").toggle("hidden")});
+$("#changedem").click(function() {
+	$("#rowdemande").removeAttr('hidden')
+	$("#changedemande").toggle("hidden")});
+	
+	</script>
 <?php include 'footer.php'; ?>
 </body>
 </html>
