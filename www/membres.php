@@ -57,6 +57,7 @@ if (isset($_POST['nom'])){
 </head>
 <body>
 <?php include 'header.php'; ?>
+<script src="js/jquery.validate.min.js" type="text/javascript"></script>
 <div class="container">
 <?php
 if (!empty($erreur)){
@@ -68,7 +69,7 @@ echo "<div class='alert alert-success'><strong>Réussi</strong> : ".$succes."</d
 
 		<h2>Création d'un membre</h2>
 		<h4><?php if(isset($_GET['add']) && ($_GET['add'] == "ok")) { ?>Membre créé avec succès. <?php } ?></h4>
-		<form class="form-horizontal" role="form" action="" name="add" method="post" autocomplete="off">
+		<form class="form-horizontal" id="ajoutmembre" role="form" action="" name="add" method="post" autocomplete="off">
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<h3 class="panel-title">Informations</h3>
@@ -123,12 +124,77 @@ echo "<div class='alert alert-success'><strong>Réussi</strong> : ".$succes."</d
 				</div>
 				<div class="form-group">
 					<div class="col-sm-offset-4 col-sm-8">
-						<button type="submit" class="btn btn-warning">Envoyer</button>
+						<button type="submit" class="btn btn-warning" id="submit">Envoyer</button>
 				    </div>
 				</div>
 			</div>
 		</form>
 </div>
 <?php } include 'footer.php'; ?>
+<script>
+
+$('#ajoutmembre').validate({
+        rules: {
+            nom: {
+                minlength: 3,
+                maxlength: 20,
+                required: true
+            },
+            prenom: {
+                minlength: 3,
+                maxlength: 20,
+                required: true
+            },
+			pass: {
+                minlength: 8,
+                maxlength: 25,
+                required: true,
+            },
+			pass2: {
+                minlength: 8,
+                maxlength: 25,
+                required: true,
+				equalTo: "#pass"
+            }
+        },
+		
+        highlight: function(element) {
+            $(element).closest('.form-group').addClass('has-error');
+			$('#submit').addClass('disabled');
+        },
+        unhighlight: function(element) {
+            $(element).closest('.form-group').removeClass('has-error');
+			$('#submit').removeClass('disabled');
+        },
+        errorElement: 'span',
+        errorClass: 'help-block',
+        errorPlacement: function(error, element) {
+            if(element.parent('.input-group').length) {
+                error.insertAfter(element.parent());
+            } else {
+                error.insertAfter(element);
+            }
+        }
+    });
+jQuery.extend(jQuery.validator.messages, {
+  required: "Ce champ est requis",
+  remote: "Une erreur est présente",
+  email: "votre message",
+  url: "votre message",
+  date: "votre message",
+  dateISO: "Une erreur de date est présente",
+  number: "votre message",
+  digits: "votre message",
+  creditcard: "Une erreur est présente",
+  equalTo: "Les deux valeurs doivent être identiques",
+  accept: "Une erreur est présente",
+  maxlength: jQuery.validator.format("Doit contenir moins de {0} caractères."),
+  minlength: jQuery.validator.format("Doit contenir plus de {0} caractères."),
+  rangelength: jQuery.validator.format("Doit contenir entre {0} et {1} caractères."),
+  range: jQuery.validator.format("votre message  entre {0} et {1}."),
+  max: jQuery.validator.format("votre message  inférieur ou égal à {0}."),
+  min: jQuery.validator.format("votre message  supérieur ou égal à {0}.")
+});
+</script>
 </body>
 </html>

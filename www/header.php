@@ -1,4 +1,16 @@
-<div class="navbar navbar-default navbar-static-top" role="navigation">
+<?php
+$query = "SELECT valid_demande_rt, valid_demande_dps, annee_poste FROM demande_dps WHERE valid_demande_rt NOT LIKE '0000-00-00' AND valid_demande_dps LIKE '0000-00-00'";
+$number_dps = mysqli_query($link, $query);
+$row_cnt = mysqli_num_rows($number_dps);
+
+$query = "SELECT * FROM settings WHERE setting_name='name'";
+$query_result = mysqli_query($link, $query);
+$settings_array = mysqli_fetch_array($query_result);
+?>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="js/bootstrap.min.js" type="text/javascript" charset="utf-8"></script>
+
+<div class="navbar navbar-default navbar-static-top " role="navigation">
       <div class="container">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
@@ -7,7 +19,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="accueil.php">Extranet - ADPC92</a>
+          <a class="navbar-brand" href="accueil.php"><?php echo $settings_array['setting_value'];?></a>
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
@@ -17,7 +29,7 @@
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">Operationnel <span class="caret"></span></a>
               <ul class="dropdown-menu" role="menu">
 				<li class="dropdown-header">Direction départementale</li>
-				<li><a href="#">A traîter <span class="badge">8</span></a></li>
+				<li><a href="list-dps.php?filter=en-attente">A traîter <span class="badge"><?php echo $row_cnt;?></span></a></li>
 					<li class="divider"></li>
                 <li class="dropdown-header">Gestion des DPS</li>
 				<li><a href="list-dps.php?commune=<?php echo $_SESSION["commune"]; ?>">Liste des DPS de l'Antenne</a></li>
@@ -28,6 +40,15 @@
 				<li class="dropdown-header">Réglages oppérationnels</li>
 				<li><a href="list-organisateur.php">Liste des organisateurs</a></li>
 				<li><a href="add-organisateur.php">Ajouter un organisateur</a></li>
+              </ul>
+            </li>
+			<li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Bureau <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+				<li class="dropdown-header">Trésorerie</li>
+				<li><a href="tresorerie.php?filter=accepted">Trésorerie</a></li>
+				<li><a href="devis.php">Devis</a></li>
+				<li><a href="factures.php">Factures</a></li>
               </ul>
             </li>
 <?php if ($_SESSION['privilege'] == "admin") {?>

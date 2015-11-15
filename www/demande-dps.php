@@ -32,6 +32,13 @@ if(isset($_POST['org_id'])){
 	$org_fill = mysqli_query($link, $query_org_fill);
 	$org_array = mysqli_fetch_array($org_fill);
 }
+$duplicate_dps="";
+if(isset($_POST['duplicate_dps'])){
+	$duplicate_dps_id = $_POST['duplicate_dps'];
+	$query_duplicate_fill = "SELECT * FROM demande_dps WHERE id=$duplicate_dps_id";
+	$duplicate_fill = mysqli_query($link, $query_duplicate_fill);
+	$duplicate_array = mysqli_fetch_array($duplicate_fill);
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -40,10 +47,19 @@ if(isset($_POST['org_id'])){
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<link rel="stylesheet" href="css/bootstrap.min.css" type="text/css" media="all" title="no title" charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=no">
+	<link href="css/bootstrap-datetimepicker.min.css" media="all" rel="stylesheet" type="text/css" />
 </head>
 <body>
 <?php include 'header.php'; ?>
+<script type="text/javascript" src="js/moment.js"></script>
+<script src="js/moment-with-locales.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/bootstrap-datetimepicker.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/fr.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/fileinput.js" type="text/javascript"></script>
 <div class="container">
+<?php if(isset($_POST['duplicate_dps'])){?>
+<div class='alert alert-warning'><span class="glyphicon glyphicon-alert" style="font-size:2em"></span> <strong>Attention : </strong>Tous les champs ne sont pas dupliqués.<br>Vous devez vérifier tous les champs avant d'envoyer en validation.</div>
+<?php }?>
 		<?php if ($_SESSION['privilege'] == "admin") {?>
 			<h2>Formulaire : Demande de DPS</h2>
 			<h3>Demande : <?php echo $cu; ?></h3>
@@ -124,7 +140,7 @@ if(isset($_POST['org_id'])){
 							</select>
 						</div>
 						<div class="btn-group col-sm-4" role="group">
-							<button type="submit" class="btn btn-warning" disabled>Selectionner</button>
+							<button type="submit" class="btn btn-warning">Selectionner</button>
 						</div>
 					</div>
 					</form>
@@ -139,45 +155,45 @@ if(isset($_POST['org_id'])){
 					</div>
 				<div class="panel-body">
 					<div class="form-group form-group-sm">
-						<label for="nom_organisation" class="col-sm-4 control-label">Nom de l'organisation <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Nom de la société, association, collectivité, etc."></span></label>
+						<label for="nom_organisation" class="col-sm-4 control-label">Nom de l'organisation <span class="glyphicon glyphicon-info-sign" rel="popover" data-trigger="hover" data-toggle="popover" data-content="Nom de la société, association, collectivité, etc."></span></label>
 						<div class="col-sm-8">
-							<input type="text" class="form-control" id="nom_organisation" name="nom_organisation" placeholder="Nom de l'organisation" value="<?php if(isset($org_array['nom'])){echo $org_array['nom'];}?>">
+							<input type="text" class="form-control" id="nom_organisation" name="nom_organisation" placeholder="Nom de l'organisation" value="<?php if(isset($org_array['nom'])){echo $org_array['nom'];}elseif(isset($duplicate_array['organisateur'])){echo $duplicate_array['organisateur'];}?>">
 						</div>
 					</div>
 					<div class="form-group form-group-sm">
-						<label for="represente_par" class="col-sm-4 control-label">Représenté par <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Personne qui représente l'organisation."></span></label>
+						<label for="represente_par" class="col-sm-4 control-label">Représenté par <span class="glyphicon glyphicon-info-sign" rel="popover" data-trigger="hover" data-toggle="popover" data-content="Personne qui représente l'organisation."></span></label>
 						<div class="col-sm-8">
-							<input type="text" class="form-control" id="represente_par" name="represente_par" placeholder="Représentant" value="<?php if(isset($org_array['represente'])){echo $org_array['represente'];}?>">
+							<input type="text" class="form-control" id="represente_par" name="represente_par" placeholder="Représentant" value="<?php if(isset($org_array['represente'])){echo $org_array['represente'];}elseif(isset($duplicate_array['representant_org'])){echo $duplicate_array['representant_org'];}?>">
 						</div>
 					</div>
 					<div class="form-group form-group-sm">
-						<label for="qualite" class="col-sm-4 control-label">Qualité <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Statut du représentant."></span></label>
+						<label for="qualite" class="col-sm-4 control-label">Qualité <span class="glyphicon glyphicon-info-sign" rel="popover" data-toggle="popover" data-trigger="hover" data-content="Statut du représentant."></span></label>
 						<div class="col-sm-8">
-							<input type="text" class="form-control" id="qualite" name="qualite" placeholder="Qualité" value="<?php if(isset($org_array['qualite'])){echo $org_array['qualite'];}?>">
+							<input type="text" class="form-control" id="qualite" name="qualite" placeholder="Qualité" value="<?php if(isset($org_array['qualite'])){echo $org_array['qualite'];}elseif(isset($duplicate_array['qualite_org'])){echo $duplicate_array['qualite_org'];}?>">
 						</div>
 					</div>
 					<div class="form-group form-group-sm">
-						<label for="adresse" class="col-sm-4 control-label">Adresse postale <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Adresse, code postale, ville."></span></label>
+						<label for="adresse" class="col-sm-4 control-label">Adresse postale <span class="glyphicon glyphicon-info-sign" rel="popover" data-toggle="popover" data-trigger="hover" data-content="Adresse, code postale, ville."></span></label>
 						<div class="col-sm-8">
-							<input type="text" class="form-control" id="adresse" name="adresse" placeholder="Adresse" value="<?php if(isset($org_array['adresse'])){echo $org_array['adresse'];}?>">
+							<input type="text" class="form-control" id="adresse" name="adresse" placeholder="Adresse" value="<?php if(isset($org_array['adresse'])){echo $org_array['adresse'];}elseif(isset($duplicate_array['adresse_org'])){echo $duplicate_array['adresse_org'];}?>">
 						</div>
 					</div>
 					<div class="form-group form-group-sm">
-						<label for="telephone" class="col-sm-4 control-label">Téléphone <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Format 0XXXXXXXXX"></span></label>
+						<label for="telephone" class="col-sm-4 control-label">Téléphone <span class="glyphicon glyphicon-info-sign" rel="popover" data-toggle="popover" data-trigger="hover" data-content="Format 0XXXXXXXXX"></span></label>
 						<div class="col-sm-8">
-							<input type="tel" class="form-control" id="telephone" name="telephone" placeholder="telephone" value="<?php if(isset($org_array['telephone'])){echo $org_array['telephone'];}?>">
+							<input type="tel" class="form-control" id="telephone" name="telephone" placeholder="telephone" value="<?php if(isset($org_array['telephone'])){echo $org_array['telephone'];}elseif(isset($duplicate_array['tel_org'])){echo $duplicate_array['tel_org'];}?>">
 						</div>
 					</div>
 					<div class="form-group form-group-sm">
-						<label for="fax" class="col-sm-4 control-label">Fax <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Format 0XXXXXXXXX"></span></label>
+						<label for="fax" class="col-sm-4 control-label">Fax <span class="glyphicon glyphicon-info-sign" rel="popover" data-toggle="popover" data-trigger="hover" data-content="Format 0XXXXXXXXX"></span></label>
 						<div class="col-sm-8">
-							<input type="tel" class="form-control" id="fax" name="fax" placeholder="Fax" value="<?php if(isset($org_array['fax'])){echo $org_array['fax'];}?>">
+							<input type="tel" class="form-control" id="fax" name="fax" placeholder="Fax" value="<?php if(isset($org_array['fax'])){echo $org_array['fax'];}elseif(isset($duplicate_array['fax_org'])){echo $duplicate_array['fax_org'];}?>">
 						</div>
 					</div>
 					<div class="form-group form-group-sm">
-						<label for="email" class="col-sm-4 control-label">E-mail <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Adresse e-mail du représentant ou de l'organisation."></span></label>
+						<label for="email" class="col-sm-4 control-label">E-mail <span class="glyphicon glyphicon-info-sign" rel="popover" data-toggle="popover" data-trigger="hover" data-content="Adresse e-mail du représentant ou de l'organisation."></span></label>
 						<div class="col-sm-8">
-							<input type="email" class="form-control" id="email" name="email" placeholder="E-mail" value="<?php if(isset($org_array['email'])){echo $org_array['email'];}?>">
+							<input type="email" class="form-control" id="email" name="email" placeholder="E-mail" value="<?php if(isset($org_array['email'])){echo $org_array['email'];}elseif(isset($duplicate_array['email_org'])){echo $duplicate_array['email_org'];}?>">
 						</div>
 					</div>
 					<div class="form-group form-group-sm">
@@ -197,142 +213,120 @@ if(isset($_POST['org_id'])){
 					</div>
 					<div class="panel-body">
 						<div class="form-group form-group-sm">
-							<label for="nom_nature" class="col-sm-4 control-label">Nom / Nature <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Nom/Nature de la manifestation"></span></label>
+							<label for="nom_nature" class="col-sm-4 control-label">Nom / Nature <span class="glyphicon glyphicon-info-sign" rel="popover" data-trigger="hover" data-toggle="popover" data-content="Nom/Nature de la manifestation"></span></label>
 							<div class="col-sm-8">
-								<input type="text" class="form-control" id="nom_nature" name="nom_nature" placeholder="Nom / Nature">
+								<input type="text" class="form-control" id="nom_nature" name="nom_nature" placeholder="Nom / Nature" value="<?php if(isset($duplicate_array['description_manif'])){echo $duplicate_array['description_manif'];} ?>">
 							</div>
 						</div>
 						<div class="form-group form-group-sm">
-							<label for="activite_descriptif" class="col-sm-4 control-label">Activité / Descriptif <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Descriptif court."></span></label>
+							<label for="activite_descriptif" class="col-sm-4 control-label">Activité / Descriptif <span class="glyphicon glyphicon-info-sign" data-trigger="hover" rel="popover" data-toggle="popover" data-content="Descriptif court."></span></label>
 							<div class="col-sm-8">
-								<input type="text" class="form-control" id="activite_descriptif" name="activite_descriptif" placeholder="Activité / Descriptif">
+								<input type="text" class="form-control" id="activite_descriptif" name="activite_descriptif" placeholder="Activité / Descriptif" value="<?php if(isset($duplicate_array['activite'])){echo $duplicate_array['activite'];} ?>">
 							</div>
 						</div>
 						<div class="form-group form-group-sm">
-							<label for="lieu_precis" class="col-sm-4 control-label">Lieu précis <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Adresse la plus précise possible du lieu de l'événement."></span></label>
+							<label for="lieu_precis" class="col-sm-4 control-label">Lieu précis <span class="glyphicon glyphicon-info-sign" rel="popover" data-trigger="hover" data-toggle="popover" data-content="Adresse la plus précise possible du lieu de l'événement."></span></label>
 							<div class="col-sm-8">
-								<input type="text" class="form-control" id="lieu_precis" name="lieu_precis" placeholder="Adresse précise du lien de l'évenement">
+								<input type="text" class="form-control" id="lieu_precis" name="lieu_precis" placeholder="Adresse précise du lien de l'évenement" value="<?php if(isset($duplicate_array['adresse_manif'])){echo $duplicate_array['adresse_manif'];} ?>">
 							</div>
 						</div>
 						<div class="form-group form-group-sm form-inline row">
 							<label for="date_debut" class="col-sm-4 control-label">Date et heure du début</label>
 							<div class="col-sm-6">
-								<select class="form-control" id="jour_debut" name="date_debut">
-									<?php 
-								$i = 1;
-								while($i <= 31){
-								echo "<option value='".$i."'>".$i."</option>";
-								$i++;
-								}
-								?>
-								</select>
-								<select class="form-control" id="mois_debut" name="date_debut">
-									<option value="1">Janvier</option>
-									<option value="2">Février</option>
-									<option value="3">Mars</option>
-									<option value="4">Avril</option>
-									<option value="5">Mai</option>
-									<option value="6">Juin</option>
-									<option value="7">Juillet</option>
-									<option value="8">Août</option>
-									<option value="9">Septembre</option>
-									<option value="10">Octobre</option>
-									<option value="11">Novembre</option>
-									<option value="12">Décembre</option>
-								</select>
-								<select class="form-control" id="annee_debut" name="date_debut">
-									<option value="<?php echo date("Y") ?>"><?php echo date("Y") ?></option>
-									<option value="<?php echo date("Y")+1 ?>"><?php echo date("Y")+1 ?></option>
-									<option value="<?php echo date("Y")+2 ?>"><?php echo date("Y")+2 ?></option>
-									<option value="<?php echo date("Y")+3 ?>"><?php echo date("Y")+3 ?></option>
-								</select>
+								<div class='input-group date' id='date_debut' name="date_debut">
+								<input type='text' class="form-control" id='date_debut' name="date_debut"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-calendar"></span>
+									</span>
+								</div>
 							</div>
 							<div class="col-sm-2">
-								<select class="form-control" id="h_debut" name="date_debut">
-									<?php 
-								$i = 0;
-								while($i <= 23){
-								echo "<option value='".$i."'>".$i."</option>";
-								$i++;
-								}
-								?>
-								</select>
-								<select class="form-control" id="m_debut" name="date_debut">
-									<?php 
-								$i = 0;
-								while($i <= 59){
-								echo "<option value='".$i."'>".$i."</option>";
-								$i++;
-								}
-								?>
-								</select>
+								<div class='input-group date' id='heure_debut' name="heure_debut">
+								<input type='text' class="form-control" id='heure_debut' name="heure_debut"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-time"></span>
+									</span>
+								</div>
 							</div>
+							<script type="text/javascript">
+							$(function () {
+								$('#date_debut').datetimepicker({
+									locale: 'fr',
+									format: 'YYYY-MM-DD',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom'
+					
+								});
+							});
+							$(function () {
+								$('#heure_debut').datetimepicker({
+									locale: 'fr',
+									format: 'HHmm',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom',
+									useCurrent:false,
+									stepping:'5'
+					
+								});
+							});
+							</script>
 						</div>
 						<div class="form-group form-group-sm form-inline row">
 							<label for="date_fin" class="col-sm-4 control-label">Date et heure de fin</label>
 							<div class="col-sm-6">
-								<select class="form-control" id="jour_fin" name="date_fin">
-									<?php 
-								$i = 1;
-								while($i <= 31){
-								echo "<option value='".$i."'>".$i."</option>";
-								$i++;
-								}
-								?>
-								</select>
-								<select class="form-control" id="mois_fin" name="date_fin">
-									<option value="1">Janvier</option>
-									<option value="2">Février</option>
-									<option value="3">Mars</option>
-									<option value="4">Avril</option>
-									<option value="5">Mai</option>
-									<option value="6">Juin</option>
-									<option value="7">Juillet</option>
-									<option value="8">Août</option>
-									<option value="9">Septembre</option>
-									<option value="10">Octobre</option>
-									<option value="11">Novembre</option>
-									<option value="12">Décembre</option>
-								</select>
-								<select class="form-control" id="annee_fin" name="date_fin">
-									<option value="<?php echo date("Y") ?>"><?php echo date("Y") ?></option>
-									<option value="<?php echo date("Y")+1 ?>"><?php echo date("Y")+1 ?></option>
-									<option value="<?php echo date("Y")+2 ?>"><?php echo date("Y")+2 ?></option>
-									<option value="<?php echo date("Y")+3 ?>"><?php echo date("Y")+3 ?></option>
-								</select>
+								<div class='input-group date' id='date_fin' name="date_fin">
+								<input type='text' class="form-control" id='date_fin' name="date_fin"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-calendar"></span>
+									</span>
+								</div>
 							</div>
 							<div class="col-sm-2">
-								<select class="form-control" id="h_fin" name="date_fin">
-								<?php 
-								$i = 0;
-								while($i <= 23){
-								echo "<option value='".$i."'>".$i."</option>";
-								$i++;
-								}
-								?>
-								</select>
-								<select class="form-control" id="m_fin" name="date_fin">
-									<?php 
-								$i = 0;
-								while($i <= 59){
-								echo "<option value='".$i."'>".$i."</option>";
-								$i++;
-								}
-								?>
-								</select>
+								<div class='input-group date' id='heure_fin' name="heure_fin">
+								<input type='text' class="form-control" id='heure_fin' name="heure_fin"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-time"></span>
+									</span>
+								</div>
 							</div>
+							<script type="text/javascript">
+							$(function () {
+								$('#date_fin').datetimepicker({
+									locale: 'fr',
+									format: 'YYYY-MM-DD',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom'
+					
+								});
+							});
+							$(function () {
+								$('#heure_fin').datetimepicker({
+									locale: 'fr',
+									format: 'HHmm',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom',
+									useCurrent:false,
+									stepping:'5'
+					
+								});
+							});
+							</script>
 						</div>
 						<div class="form-group form-group-sm">
-							<label for="departement" class="col-sm-4 control-label">Département où se situe la manifestation <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Exemple : 92"></span></label>
+							<label for="departement" class="col-sm-4 control-label">Département où se situe la manifestation <span class="glyphicon glyphicon-info-sign" rel="popover" data-trigger="hover" data-toggle="popover" data-content="Exemple : 92"></span></label>
 							<div class="col-sm-8">
-								<input type="number" class="form-control" id="departement" name="departement" placeholder="Département">
+								<input type="number" class="form-control" id="departement" name="departement" placeholder="Département" value="<?php if(isset($duplicate_array['dept'])){echo $duplicate_array['dept'];} ?>">
 							</div>
 						</div>
 						<div class="form-group form-group-sm">
-							<label for="prix" class="col-sm-4 control-label">Prix <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Tarif facturé au client."></span></label>
+							<label for="prix" class="col-sm-4 control-label">Prix <span class="glyphicon glyphicon-info-sign" rel="popover" data-toggle="popover" data-trigger="hover" data-content="Tarif facturé au client."></span></label>
 							<div class="col-sm-8">
 								<div class="input-group">
-									<input type="number" class="form-control" id="prix" name="prix" placeholder="Prix">
+									<input type="number" class="form-control" id="prix" name="prix" placeholder="Prix" value="<?php if(isset($duplicate_array['prix'])){echo $duplicate_array['prix'];} ?>">
 									<div class="input-group-addon">euros
 									</div>
 								</div>
@@ -346,13 +340,13 @@ if(isset($_POST['org_id'])){
 					</div>
 					<div class="panel-body">
 						<div class="form-group form-group-sm">
-							<label for="spectateurs" class="col-sm-4 control-label">Nombre de spectateurs <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Chiffres uniquement."></span></label>
+							<label for="spectateurs" class="col-sm-4 control-label">Nombre de spectateurs <span class="glyphicon glyphicon-info-sign" rel="popover" data-toggle="popover" data-trigger="hover" data-content="Chiffres uniquement."></span></label>
 							<div class="col-sm-8">
 								<input type="number" class="form-control" id="spectateurs" name="spectateurs" placeholder="Spectateurs">
 							</div>
 						</div>
 						<div class="form-group form-group-sm">
-							<label for="participants" class="col-sm-4 control-label">Nombre de participants <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Chiffres uniquement."></span></label>
+							<label for="participants" class="col-sm-4 control-label">Nombre de participants <span class="glyphicon glyphicon-info-sign" rel="popover" data-toggle="popover" data-trigger="hover" data-content="Chiffres uniquement."></span></label>
 							<div class="col-sm-8">
 								<input type="number" class="form-control" id="participants" name="participants" placeholder="Participants">
 							</div>
@@ -403,25 +397,91 @@ if(isset($_POST['org_id'])){
 						<h3 class="panel-title">Configuration du dispositif prévisionnel de secours mis en place</h3>
 					</div>
 					<div class="panel-body">
-						<div class="form-group form-group-sm">
-							<label for="date_debut_poste" class="col-sm-4 control-label">Date du début</label>
-							<div class="col-sm-2">
-								<input type="text" class="form-control" id="date_debut_poste" name="date_debut_poste" placeholder="01/01/2014">
+							<div class="form-group form-group-sm form-inline row">
+							<label for="date_debut_poste" class="col-sm-4 control-label">Date et heure du début de poste</label>
+							<div class="col-sm-6">
+								<div class='input-group date' id='date_debut_poste' name="date_debut_poste">
+								<input type='text' class="form-control" id='date_debut_poste' name="date_debut_poste"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-calendar"></span>
+									</span>
+								</div>
 							</div>
-							<label for="date_fin_poste" class="col-sm-4 control-label">Date de fin</label>
 							<div class="col-sm-2">
-								<input type="text" class="form-control" id="date_fin_poste" name="date_fin_poste" placeholder="01/01/2014">
+								<div class='input-group date' id='heure_debut_poste' name="heure_debut_poste">
+								<input type='text' class="form-control" id='heure_debut_poste' name="heure_debut_poste"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-time"></span>
+									</span>
+								</div>
 							</div>
+							<script type="text/javascript">
+							$(function () {
+								$('#date_debut_poste').datetimepicker({
+									locale: 'fr',
+									format: 'YYYY-MM-DD',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom'
+					
+								});
+							});
+							$(function () {
+								$('#heure_debut_poste').datetimepicker({
+									locale: 'fr',
+									format: 'HHmm',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom',
+									useCurrent:false,
+									stepping:'5'
+					
+								});
+							});
+							</script>
 						</div>
-						<div class="form-group form-group-sm">
-							<label for="heure_debut_poste" class="col-sm-4 control-label">Heure du début</label>
-							<div class="col-sm-2">
-								<input type="text" class="form-control" id="heure_debut_poste" name="heure_debut_poste" placeholder="00:00">
+						<div class="form-group form-group-sm form-inline row">
+							<label for="date_fin_poste" class="col-sm-4 control-label">Date et heure de fin de poste</label>
+							<div class="col-sm-6">
+								<div class='input-group date' id='date_fin_poste' name="date_fin_poste">
+								<input type='text' class="form-control" id='date_fin_poste' name="date_fin_poste"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-calendar"></span>
+									</span>
+								</div>
 							</div>
-							<label for="heure_fin_poste" class="col-sm-4 control-label">Heure de fin</label>
 							<div class="col-sm-2">
-								<input type="text" class="form-control" id="heure_fin_poste" name="heure_fin_poste" placeholder="00:00">
+								<div class='input-group date' id='heure_fin_poste' name="heure_fin_poste">
+								<input type='text' class="form-control" id='heure_fin_poste' name="heure_fin_poste"/>
+									<span class="input-group-addon">
+									<span class="glyphicon glyphicon-time"></span>
+									</span>
+								</div>
 							</div>
+							<script type="text/javascript">
+							$(function () {
+								$('#date_fin_poste').datetimepicker({
+									locale: 'fr',
+									format: 'YYYY-MM-DD',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom'
+					
+								});
+							});
+							$(function () {
+								$('#heure_fin_poste').datetimepicker({
+									locale: 'fr',
+									format: 'HHmm',
+									showClear:true,
+									showClose:true,
+									toolbarPlacement: 'bottom',
+									useCurrent:false,
+									stepping:'5'
+					
+								});
+							});
+							</script>
 						</div>
 						<div class="panel panel-default">
 							<div class="panel-heading">Nombre de secouristes / moyens logistiques <span class="glyphicon glyphicon-info-sign" rel="tooltip" data-toggle="tooltip" title="Permet la comparaison avec la grille des risques."></span></div>
@@ -550,9 +610,9 @@ if(isset($_POST['org_id'])){
 				
 				
 				<div class="form-group">
-					<div class="col-sm-offset-4 col-sm-8">
-						<button type="submit" class="btn btn-warning">Envoyer</button>
-				    </div>
+					<div class="col-sm-offset-4 col-sm-8 ">
+						<button type="submit" class="btn btn-warning">Envoyer <span class="glyphicon glyphicon-send"></span></button>
+					</div>
 				</div>
 			</form>
 			
@@ -565,6 +625,9 @@ if(isset($_POST['org_id'])){
     $(function () {
         $("[rel='tooltip']").tooltip();
     });
+	$(function () {
+		$('[data-toggle="popover"]').popover()
+	})
 </script>
 </body>
 </html>
