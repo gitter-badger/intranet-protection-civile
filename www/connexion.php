@@ -2,7 +2,7 @@
 $hostname_dbprotect = "localhost";
 $username_dbprotect = "root";
 $password_dbprotect = "root";
-$database_dbprotect = "ADPCdev"; 
+$database_dbprotect = "ADPC"; 
 $tablename_dbprotect= "membres";    // nom de la table utilisée
 $tablename_commune = "commune";		//liste des communes
 $tablename_ratcommune = "rat_com";		//liste des rattachements aux communes
