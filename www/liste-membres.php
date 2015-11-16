@@ -73,6 +73,7 @@ if (isset($_POST['suppr'])){ // on vérifie la présence des variables de formul
 						<th>Login</th>
 						<th>Commune</th>
 						<th>Modifier</th>
+						<th>Rôles</th>
 						<th>Mot de passe</th>
 						<th>Supprimer</th>
 					</tr>
@@ -100,6 +101,11 @@ if (isset($_POST['suppr'])){ // on vérifie la présence des variables de formul
 					echo "<form action='membre.php' method='post' accept-charset='utf-8'>";
 					echo "<input type='hidden' name='modifier' value='".$membres['id_user']."'>";
 					echo "<button type='submit' class='btn btn-warning'>Modifier</button>";
+					echo "</form>";
+					echo "</td><td>";
+					echo "<form action='assign-role-users.php' method='post' accept-charset='utf-8'>";
+					echo "<input type='hidden' name='userID' value='".$membres['id_user']."'>";
+					echo "<button type='submit' class='btn btn-warning'>Rôles</button>";
 					echo "</form>";
 					echo "</td><td>";
 					echo "<form action='' method='post' accept-charset='utf-8'>";
