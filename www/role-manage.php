@@ -201,7 +201,7 @@
 							</form>
 						</td>
 						<td>
-							<form action='role-permissions.php' method='post' accept-charset='utf-8'>
+							<form action='assign-role-permissions.php' method='post' accept-charset='utf-8'>
 								<input type='hidden' name='roleID' value=<?php echo "'".$role['ID']."'"; ?> >
 								<button type='submit' class='btn btn-warning'>Permissions</button>
 							</form>
