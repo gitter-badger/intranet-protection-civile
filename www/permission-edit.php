@@ -3,6 +3,7 @@
 	require_once('connexion.php');
 	require_once ('PhpRbac/src/PhpRbac/Rbac.php');
 	use PhpRbac\Rbac;
+	$rbac = new Rbac();
 ?>
 
 <!DOCTYPE html>
@@ -16,71 +17,75 @@
 
 <body>
 
-	<?php include 'header.php'; ?>
-	<?php $undeletablePermissions=array("creer permission", "voir permission"); ?>
+<?php include 'header.php'; ?>
+<?php $undeletablePermissions=array("creer permission", "voir permission"); ?>
 
-	<ol class="breadcrumb">
-		<li><a href="/">Home</a></li>
-		<li><a href="#">Administration</a></li>
-		<li><a href="/permission-manage.php">Gestion des permissions</a></li>
-		<li class="active">Modification</li>
-	</ol>
+<ol class="breadcrumb">
+	<li><a href="/">Home</a></li>
+	<li><a href="#">Administration</a></li>
+	<li><a href="/permission-manage.php">Gestion des permissions</a></li>
+	<li class="active">Modification</li>
+</ol>
 
+
+<!-- Common -->
+<?php 
+	$permissionID = str_replace("'","", $_POST['permissionID']);
+	if($permissionID == ""){
+		$rpermissionpdateError = "Aucune permission définie";
+	}
+	else {
+		$check_query = "SELECT ID FROM rbac_permissions WHERE ID='$permissionID'" or die("Erreur lors de la consultation" . mysqli_error($link)); 
+		$verif = mysqli_query($link, $check_query);
+		$row_verif = mysqli_fetch_assoc($verif);
+		$permission = mysqli_num_rows($verif);		
+		if (!$permission){
+			$permissionUpdateError = "La permission en question n'existe pas";
+		}
+	}
+	if(!empty($permissionUpdateError)) {
+		echo "<div class='alert alert-danger'><strong>Erreur</strong> : ".$rpermissionUpdateError."</div>";
+	}
+	else {
+		$permissionTitle=$rbac->Permissions->getTitle($permissionID);
+?>
 
 
 	<!-- Update permission : Controller -->
 	<?php
-		if (isset($_POST['permissionID'])){
-			$id = str_replace("'","", $_POST['permissionID']);
-			if($id == ""){
-				$genericUpdateError = "Impossible de mettre à jour une permission inconnue";
+		if (isset($_POST['inputPermissionTitle'])) {
+			$title=$_POST['inputPermissionTitle'];
+		}
+		else {
+			$title=$rbac->Permissions->getTitle($id);
+		}
+		if (isset($_POST['inputPermissionDescription'])) {
+			$description=$_POST['inputPermissionDescription'];
+		}
+		else {
+			$description=$rbac->Permissions->getDescription($id);
+		}
+		if (isset($_POST['updatePermission'])) {	
+			$check_query = "SELECT ID FROM rbac_permissions WHERE Title='$title'" or die("Erreur lors de la consultation" . mysqli_error($link)); 
+			$verif = mysqli_query($link, $check_query);
+			$row_verif = mysqli_fetch_assoc($verif);
+			$permission = mysqli_num_rows($verif);		
+			if ($permission){
+				$genericUpdateError = "Une permission du même titre existe déjà (".$title.")";
+				$updateErrorTitle = "Une permission du même titre existe déjà (".$title.")";
 			}
-			else{
-				$check_query = "SELECT ID FROM rbac_permissions WHERE ID='$id'" or die("Erreur lors de la consultation" . mysqli_error($link)); 
-				$verif = mysqli_query($link, $check_query);
-				$row_verif = mysqli_fetch_assoc($verif);
-				$permission = mysqli_num_rows($verif);		
-				if (!$permission){
-					$genericUpdateError = "La permission en question n'existe pas";
+			
+			else if (in_array($title, $undeletablePermissions)) { 
+				$genericUpdateError = "Il est interdit de mettre à jour la permission '".$title."'";
+				$updateErrorTitle = "Il est interdit de mettre à jour la permission '".$title."'";
+			}
+			else {
+				$perm_id = $rbac->Permissions->edit($id, $title, $description);
+				if (!$perm_id){
+					$genericUpdateError = "Echec de la mise à jour (ID=".$id.")";
 				}
 				else {
-					$rbac = new PhpRbac\Rbac();
-					if (isset($_POST['inputPermissionTitle'])) {
-						$title=$_POST['inputPermissionTitle'];
-					}
-					else {
-						$title=$rbac->Permissions->getTitle($id);
-					}
-					if (isset($_POST['inputPermissionDescription'])) {
-						$description=$_POST['inputPermissionDescription'];
-					}
-					else {
-						$description=$rbac->Permissions->getDescription($id);
-					}
-					if (isset($_POST['updatePermission'])) {	
-						$check_query = "SELECT ID FROM rbac_permissions WHERE Title='$title'" or die("Erreur lors de la consultation" . mysqli_error($link)); 
-						$verif = mysqli_query($link, $check_query);
-						$row_verif = mysqli_fetch_assoc($verif);
-						$permission = mysqli_num_rows($verif);		
-						if ($permission){
-							$genericUpdateError = "Une permission du même titre existe déjà (".$title.")";
-							$updateErrorTitle = "Une permission du même titre existe déjà (".$title.")";
-						}
-						
-						else if (in_array($title, $undeletablePermissions)) { 
-							$genericUpdateError = "Il est interdit de mettre à jour la permission '".$title."'";
-							$updateErrorTitle = "Il est interdit de mettre à jour la permission '".$title."'";
-						}
-						else {
-							$perm_id = $rbac->Permissions->edit($id, $title, $description);
-							if (!$perm_id){
-								$genericUpdateError = "Echec de la mise à jour (ID=".$id.")";
-							}
-							else {
-								$genericUpdateSuccess = "Permission mise à jour (".$title.")";	
-							}
-						}
-					}
+					$genericUpdateSuccess = "Permission mise à jour (".$title.")";	
 				}
 			}
 		}
@@ -88,8 +93,11 @@
 
 
 
-	<!-- Update permission : display form -->
+	<!-- Page content container -->
 	<div class="container">
+		
+
+		<!-- Update permission : Operation status indicator -->
 		<?php
 			if (!empty($genericUpdateError)){
 				echo "<div class='alert alert-danger'><strong>Erreur</strong> : ".$genericUpdateError."</div>";
@@ -98,15 +106,18 @@
 			}
 		?>
 
-		<h2>Modifier une permission</h2>
-		<form class="form-horizontal" action='permission-edit.php' method='post' accept-charset='utf-8'>
-			<div class="panel panel-default">
-				<input type="hidden" name="updatePermission">
-				<input type="hidden" name="permissionID" value="<?php echo $id;?>">
-				<div class="panel-heading">
-					<h3 class="panel-title">Informations à mettre à jour</h3>
-				</div>
-				<div class="panel-body">
+		<h2>Modifier la permission '<?php echo $permissionTitle ?>'</h2>
+
+
+		<!-- Update permission : display form -->			
+		<div class="panel panel-info">
+			<div class="panel-heading">
+				<h3 class="panel-title">Informations à mettre à jour</h3>
+			</div>
+			<div class="panel-body">
+				<form class="form-horizontal" action='permission-edit.php' method='post' accept-charset='utf-8'>
+					<input type="hidden" name="updatePermission">
+					<input type="hidden" name="permissionID" value="<?php echo $permissionID;?>">
 
 					<?php if (!empty($updateErrorTitle)){ ?>
 						<div class="form-group has-error has-feedback">
@@ -143,11 +154,15 @@
 							<?php } ?>
 					    </div>
 					</div>
-				</div>
-			</div>
-		</form>
+				</form>	
+			</div>	
+		</div>
+
 	</div>
 
+<?php
+	}
+?>
 
 <?php include 'footer.php'; ?>
 </body>

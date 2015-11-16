@@ -3,6 +3,7 @@
 	require_once('connexion.php');
 	require_once ('PhpRbac/src/PhpRbac/Rbac.php');
 	use PhpRbac\Rbac;
+	$rbac = new Rbac();
 ?>
 
 <!DOCTYPE html>
@@ -16,80 +17,83 @@
 
 <body>
 
-	<?php include 'header.php'; ?>
-	<?php $undeletableRoles=array("Admin"); ?>
+<?php include 'header.php'; ?>
+<?php $undeletableRoles=array("Admin"); ?>
 
-	<ol class="breadcrumb">
-		<li><a href="/">Home</a></li>
-		<li><a href="#">Administration</a></li>
-		<li><a href="/role-manage.php">Gestion des rôles</a></li>
-		<li class="active">Modification</li>
-	</ol>
+<ol class="breadcrumb">
+	<li><a href="/">Home</a></li>
+	<li><a href="#">Administration</a></li>
+	<li><a href="/role-manage.php">Gestion des rôles</a></li>
+	<li class="active">Modification</li>
+</ol>
 
-
+<!-- Common -->
+<?php 
+	$roleID = str_replace("'","", $_POST['roleID']);
+	if($roleID == ""){
+		$roleUpdateError = "Aucun rôle défini";
+	}
+	else {
+		$check_query = "SELECT ID FROM rbac_roles WHERE ID='$roleID'" or die("Erreur lors de la consultation" . mysqli_error($link)); 
+		$verif = mysqli_query($link, $check_query);
+		$row_verif = mysqli_fetch_assoc($verif);
+		$role = mysqli_num_rows($verif);		
+		if (!$role){
+			$roleUpdateError = "Le rôle en question n'existe pas";
+		}
+	}
+	if(!empty($roleUpdateError)) {
+		echo "<div class='alert alert-danger'><strong>Erreur</strong> : ".$roleUpdateError."</div>";
+	}
+	else {
+		$roleTitle=$rbac->Roles->getTitle($roleID);
+?>
 
 	<!-- Update role : Controller -->
 	<?php
-		if (isset($_POST['roleID'])){
-			$id = str_replace("'","", $_POST['roleID']);
-			if($id == ""){
-				$genericUpdateError = "Impossible de mettre à jour un rôle inconnu";
+		if (isset($_POST['inputRoleTitle'])) {
+			$title=$_POST['inputRoleTitle'];
+		}
+		else {
+			$title=$rbac->Roles->getTitle($roleID);
+		}
+		if (isset($_POST['inputRoleDescription'])) {
+			$description=$_POST['inputRoleDescription'];
+		}
+		else {
+			$description=$rbac->Roles->getDescription($roleID);
+		}
+		if (isset($_POST['updateRole'])) {	
+			$check_query = "SELECT ID FROM rbac_roles WHERE Title='$title'" or die("Erreur lors de la consultation" . mysqli_error($link)); 
+			$verif = mysqli_query($link, $check_query);
+			$row_verif = mysqli_fetch_assoc($verif);
+			$role = mysqli_num_rows($verif);		
+			if ($role){
+				$genericUpdateError = "Un rôle du même titre existe déjà (".$title.")";
+				$updateErrorTitle = "Un rôle du même titre existe déjà (".$title.")";
 			}
-			else{
-				$check_query = "SELECT ID FROM rbac_roles WHERE ID='$id'" or die("Erreur lors de la consultation" . mysqli_error($link)); 
-				$verif = mysqli_query($link, $check_query);
-				$row_verif = mysqli_fetch_assoc($verif);
-				$role = mysqli_num_rows($verif);		
-				if (!$role){
-					$genericUpdateError = "Le rôle en question n'existe pas";
+			
+			else if (in_array($title, $undeletableRoles)) { 
+				$genericUpdateError = "Il est interdit de mettre à jour le rôle '".$title."'";
+				$updateErrorTitle = "Il est interdit de mettre à jour le rôle '".$title."'";
+			}
+			else {
+				$perm_id = $rbac->Roles->edit($roleID, $title, $description);
+				if (!$perm_id){
+					$genericUpdateError = "Echec de la mise à jour (ID=".$roleID.")";
 				}
 				else {
-					$rbac = new PhpRbac\Rbac();
-					if (isset($_POST['inputRoleTitle'])) {
-						$title=$_POST['inputRoleTitle'];
-					}
-					else {
-						$title=$rbac->Roles->getTitle($id);
-					}
-					if (isset($_POST['inputRoleDescription'])) {
-						$description=$_POST['inputRoleDescription'];
-					}
-					else {
-						$description=$rbac->Roles->getDescription($id);
-					}
-					if (isset($_POST['updateRole'])) {	
-						$check_query = "SELECT ID FROM rbac_roles WHERE Title='$title'" or die("Erreur lors de la consultation" . mysqli_error($link)); 
-						$verif = mysqli_query($link, $check_query);
-						$row_verif = mysqli_fetch_assoc($verif);
-						$role = mysqli_num_rows($verif);		
-						if ($role){
-							$genericUpdateError = "Un rôle du même titre existe déjà (".$title.")";
-							$updateErrorTitle = "Un rôle du même titre existe déjà (".$title.")";
-						}
-						
-						else if (in_array($title, $undeletableRoles)) { 
-							$genericUpdateError = "Il est interdit de mettre à jour le rôle '".$title."'";
-							$updateErrorTitle = "Il est interdit de mettre à jour le rôle '".$title."'";
-						}
-						else {
-							$perm_id = $rbac->Roles->edit($id, $title, $description);
-							if (!$perm_id){
-								$genericUpdateError = "Echec de la mise à jour (ID=".$id.")";
-							}
-							else {
-								$genericUpdateSuccess = "Rôle mis à jour (".$title.")";	
-							}
-						}
-					}
+					$genericUpdateSuccess = "Rôle mis à jour (".$title.")";	
 				}
 			}
 		}
 	?>
 
 
-
-	<!-- Update role : display form -->
+	<!-- Page content container -->
 	<div class="container">
+
+		<!-- Update role : Operation status indicator -->
 		<?php
 			if (!empty($genericUpdateError)){
 				echo "<div class='alert alert-danger'><strong>Erreur</strong> : ".$genericUpdateError."</div>";
@@ -98,16 +102,19 @@
 			}
 		?>
 
-		<h2>Modifier un rôle</h2>
-		<form class="form-horizontal" action='role-edit.php' method='post' accept-charset='utf-8'>
-			<div class="panel panel-default">
-				<input type="hidden" name="updateRole">
-				<input type="hidden" name="roleID" value="<?php echo $id;?>">
-				<div class="panel-heading">
-					<h3 class="panel-title">Informations à mettre à jour</h3>
-				</div>
-				<div class="panel-body">
+		<h2>Modifier le rôle '<?php echo $roleTitle ?>'</h2>
 
+
+		<!-- Update role : display form -->
+		<div class="panel panel-info">
+			<div class="panel-heading">
+				<h3 class="panel-title">Informations à mettre à jour</h3>
+			</div>
+			<div class="panel-body">
+				<form class="form-horizontal" action='role-edit.php' method='post' accept-charset='utf-8'>
+					<input type="hidden" name="updateRole">
+					<input type="hidden" name="roleID" value="<?php echo $roleID;?>">
+				
 					<?php if (!empty($updateErrorTitle)){ ?>
 						<div class="form-group has-error has-feedback">
 							<label for="inputRoleTitle" class="col-sm-4 control-label">Nouveau titre</label>
@@ -143,11 +150,15 @@
 							<?php } ?>
 					    </div>
 					</div>
-				</div>
+				</form>	
 			</div>
-		</form>
+		</div>
+
 	</div>
 
+<?php
+	}
+?>
 
 <?php include 'footer.php'; ?>
 </body>
