@@ -63,6 +63,7 @@ $settings_array = mysqli_fetch_array($query_result);
 				<li><a href="role.php">Gestion des rôles (OLD)</a></li>
         <li><a href="role-manage.php">Gestion des rôles</a></li>
         <li><a href="permission-manage.php">Gestion des permissions</a></li>
+        <li><a href="view-all-users-with-roles.php">Audit des rôles d'utilisateurs</a></li>
               </ul>
             </li>
 <?php }?>
