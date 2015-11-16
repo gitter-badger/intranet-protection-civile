@@ -124,7 +124,7 @@
 				<h3 class="panel-title">Permissions associées au rôle</h3>
 			</div>
 			<div class="panel-body">
-				<form id="permrole" class="form-horizontal" action='role-permissions.php' method='post' accept-charset='utf-8'>
+				<form id="permrole" class="form-horizontal" action='assign-role-permissions.php' method='post' accept-charset='utf-8'>
 					<input type="hidden" name="roleID" value="<?php echo $roleID;?>">
 					<input type="hidden" name="permissionID" id="permissionID" value="undefined">
 				
