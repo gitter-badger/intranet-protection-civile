@@ -22,7 +22,7 @@
 <ol class="breadcrumb">
 	<li><a href="/">Home</a></li>
 	<li><a href="#">Administration</a></li>
-	<li><a href="/role-manage.php">Gestion des rôles</a></li>
+	<li><a href="/role-view.php">Gestion des rôles</a></li>
 	<li class="active">Utilisation</li>
 </ol>
 
@@ -83,12 +83,12 @@
 					<div class="panel-heading">Utilisateurs</div>
 					<div class="panel-body">
 						<?php 
-							$query = "SELECT U.id_user, U.nom, U.prenom FROM rbac_rolepermissions AS RP INNER JOIN membres AS U ON RP.PermissionId=U.id_user WHERE R.ID='$roleID' ORDER BY U.nom" or die("Erreur lors de la consultation" . mysqli_error($link)); 
+							$query = "SELECT U.ID, U.last_name, U.first_name FROM rbac_rolepermissions AS RP INNER JOIN users AS U ON RP.PermissionId=U.id_user WHERE R.ID='$roleID' ORDER BY U.nom" or die("Erreur lors de la consultation" . mysqli_error($link)); 
 							$users = mysqli_query($link, $query);
 							while($user = mysqli_fetch_array($users)) { 
-								$userID=$user["id_user"];
-								$userFirstName=$user["prenom"];
-								$userLastName=$user["nom"];
+								$userID=$user["ID"];
+								$userFirstName=$user["first_name"];
+								$userLastName=$user["last_name"];
 								echo $userFirstName." ".$userLastName.", ";
 							}
 						?>
