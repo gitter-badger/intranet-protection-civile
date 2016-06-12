@@ -82,6 +82,7 @@
 				<div class="panel panel-default">
 					<div class="panel-heading">Utilisateurs</div>
 					<div class="panel-body">
+						NE FONCTIONNE PAS POUR LE MOMENT (FONCTIONNALITE PAS DEVELOPPEE)
 						<?php 
 							$query = "SELECT U.ID, U.last_name, U.first_name FROM rbac_rolepermissions AS RP INNER JOIN users AS U ON RP.RoleId=R.ID WHERE RP.PermissionId='$permissionID' ORDER BY U.nom" or die("Erreur lors de la consultation" . mysqli_error($link)); 
 							$users = mysqli_query($link, $query);
