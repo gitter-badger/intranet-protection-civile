@@ -42,10 +42,10 @@
 		$userUpdateError = "Aucun utilisateur défini";
 	}
 	else {
-		$check_query = "SELECT id_user, nom, prenom FROM membres WHERE id_user='$userID'" or die("Erreur lors de la consultation" . mysqli_error($link)); 
+		$check_query = "SELECT ID, last_name, first_name FROM users WHERE ID='$userID'" or die("Erreur lors de la consultation" . mysqli_error($link)); 
 		$verif = mysqli_query($link, $check_query);
-		$row_verif = mysqli_fetch_assoc($verif);
-		$user = mysqli_num_rows($verif);		
+		$user = mysqli_fetch_assoc($verif);
+		$userCount = mysqli_num_rows($verif);		
 		if (!$user){
 			$userUpdateError = "L'utilisateur en question n'existe pas (ID=$userID)";
 		}
@@ -54,10 +54,8 @@
 		echo "<div class='alert alert-danger'><strong>Erreur</strong> : ".$userUpdateError."</div>";
 	}
 	else {
-		$userFirstName=$user["prenom"];
-		$userLastName=$user["nom"];
-
-echo $userFirstName;
+		$userFirstName=$user["first_name"];
+		$userLastName=$user["last_name"];
 ?>
 
 

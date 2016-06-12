@@ -44,7 +44,7 @@
 			<h3 class="panel-title">Visualisation des rôles</h3>
 		</div>
 		<div class="table-responsive">
-			<table class="table ">
+			<table class="table table-hover ">
 				<tr>
 					<th>ID</th>
 					<th>Titre</th>

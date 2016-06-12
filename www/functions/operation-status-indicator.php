@@ -1,7 +1,21 @@
 <?php
-	if (!empty($genericError)){
-		echo "<div class='alert alert-danger'><strong>Erreur</strong> : ".$genericError."</div>";
+	if (!empty($genericError)){ 
+	?>
+		<div class='alert alert-danger' role='alert'>
+			<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+ 			<span class="sr-only">Error:</span>
+  			<?php echo $genericError; ?>
+		</div>
+	
+	<?php 
 	} elseif (!empty($genericSuccess)){
-		echo "<div class='alert alert-success'><strong>Effectué</strong> : ".$genericSuccess."</div>";
+		?>
+		<div class='alert alert-success' role='alert'>
+			<span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span>
+ 			<span class="sr-only">Success:</span>
+  			<?php echo $genericSuccess; ?>
+		</div>
+	
+	<?php 
 	}
 ?>

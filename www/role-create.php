@@ -82,7 +82,6 @@
 						/>
 					</div>
 				</div>
-
 				<div class="form-group">
 					<div class="col-sm-offset-4 col-sm-8">
 						<?php if (empty($genericSuccess)){ ?>
@@ -90,7 +89,7 @@
 						<?php } ?>
 						<button type="submit" class="btn btn-success">Créer</button>
 						<?php if (isset($_POST['addRole']) && !empty($genericSuccess)) { ?>
-							<a class="btn btn-info" href="role-view.php" role="button">J'ai terminé ! Retour à la liste</a>
+							<a class="btn btn-default" href="role-view.php" role="button">J'ai terminé ! Retour à la liste</a>
 						<?php } ?>
 				   </div>
 				</div>
