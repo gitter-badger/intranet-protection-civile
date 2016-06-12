@@ -22,7 +22,7 @@
 <ol class="breadcrumb">
 	<li><a href="/">Home</a></li>
 	<li><a href="#">Administration</a></li>
-	<li><a href="/role-manage.php">Gestion des rôles</a></li>
+	<li><a href="/role-view.php">Gestion des rôles</a></li>
 	<li class="active">Attributions de permissions</li>
 </ol>
 
@@ -156,7 +156,7 @@
 
 					<div class="form-group">
 						<div class="col-sm-offset-4 col-sm-8">
-							<a class="btn btn-info" href="role-manage.php" role="button">Retour à la liste des rôles</a>
+							<a class="btn btn-info" href="role-view.php" role="button">Retour à la liste des rôles</a>
 					    </div>
 					</div>
 				</form>
