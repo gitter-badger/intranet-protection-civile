@@ -83,8 +83,6 @@
 						<td>
 							<form action='user-edit.php' method='post' accept-charset='utf-8'>
 								<input type='hidden' name='userID' value=<?php echo "'".$user['ID']."'"; ?> >
-								<input type='hidden' name='userID' value=<?php echo "'".$user['ID']."'"; ?> >
-								<input type='hidden' name='userID' value=<?php echo "'".$user['ID']."'"; ?> >
 								<button type='submit' class='btn btn-warning'>Modifier</button>
 							</form>
 						</td>

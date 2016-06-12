@@ -180,9 +180,28 @@ $('#addUserForm').validate({
                 minlength: 8,
                 maxlength: 25,
                 required: true,
-				equalTo: "#inputUserPassword"
+				equalTo: "#inputUserPassword1"
             }
-        });
+},
+		
+        highlight: function(element) {
+            $(element).closest('.form-group').addClass('has-error');
+			$('#submit').addClass('disabled');
+        },
+        unhighlight: function(element) {
+            $(element).closest('.form-group').removeClass('has-error');
+			$('#submit').removeClass('disabled');
+        },
+        errorElement: 'span',
+        errorClass: 'help-block',
+        errorPlacement: function(error, element) {
+            if(element.parent('.input-group').length) {
+                error.insertAfter(element.parent());
+            } else {
+                error.insertAfter(element);
+            }
+        }
+    });
 jQuery.extend(jQuery.validator.messages, {
   required: "Ce champ est requis",
   remote: "Une erreur est présente",

@@ -157,7 +157,7 @@
 
 					<div class="form-group">
 						<div class="col-sm-offset-4 col-sm-8">
-							<a class="btn btn-info" href="liste-membres.php" role="button">Retour à la liste des utilisateurs</a>
+							<a class="btn btn-info" href="user-view.php" role="button">Retour à la liste des utilisateurs</a>
 					    </div>
 					</div>
 				</form>
