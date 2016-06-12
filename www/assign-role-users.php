@@ -22,7 +22,7 @@
 <ol class="breadcrumb">
 	<li><a href="/">Home</a></li>
 	<li><a href="#">Administration</a></li>
-	<li><a href="/role-manage.php">Gestion des utilisateurs</a></li>
+	<li><a href="/user-view.php">Gestion des utilisateurs</a></li>
 	<li class="active">Attributions de rôles</li>
 </ol>
 
@@ -36,26 +36,10 @@
 
 
 <!-- Common -->
+<?php include 'functions/controller/user-common.php'; ?>
+
 <?php 
-	$userID = str_replace("'","", $_POST['userID']);
-	if($userID == ""){
-		$userUpdateError = "Aucun utilisateur défini";
-	}
-	else {
-		$check_query = "SELECT ID, last_name, first_name FROM users WHERE ID='$userID'" or die("Erreur lors de la consultation" . mysqli_error($link)); 
-		$verif = mysqli_query($link, $check_query);
-		$user = mysqli_fetch_assoc($verif);
-		$userCount = mysqli_num_rows($verif);		
-		if (!$user){
-			$userUpdateError = "L'utilisateur en question n'existe pas (ID=$userID)";
-		}
-	}
-	if(!empty($userUpdateError)) {
-		echo "<div class='alert alert-danger'><strong>Erreur</strong> : ".$userUpdateError."</div>";
-	}
-	else {
-		$userFirstName=$user["first_name"];
-		$userLastName=$user["last_name"];
+	if(empty($commonError)) {
 ?>
 
 
@@ -64,7 +48,7 @@
 		if (isset($_POST['roleID'])){
 			$roleID = str_replace("'","", $_POST['roleID']);
 			if($roleID == ""){
-				$genericUpdateError = "Impossible de mettre à jour un rôle inconnu";
+				$genericError = "Impossible de mettre à jour un rôle inconnu";
 			}
 			else{
 				$check_query = "SELECT ID FROM rbac_roles WHERE ID='$roleID'" or die("Erreur lors de la consultation" . mysqli_error($link)); 
@@ -72,30 +56,21 @@
 				$row_verif = mysqli_fetch_assoc($verif);
 				$role = mysqli_num_rows($verif);		
 				if (!$role){
-					$genericUpdateError = "Le rôle en question n'existe pas";
+					$genericError = "Le rôle en question n'existe pas";
 				}
 				else {
 					$roleTitle=$rbac->Roles->getTitle($roleID);
-					$check_query = "SELECT id_user FROM membres WHERE id_user='$userID'" or die("Erreur lors de la consultation" . mysqli_error($link)); 
-					$verif = mysqli_query($link, $check_query);
-					$row_verif = mysqli_fetch_assoc($verif);
-					$user = mysqli_num_rows($verif);		
-					if (!$user){
-						$genericUpdateError = "L'utilisateur en question n'existe pas";
+					if ($rbac->Users->hasRole($roleTitle, $userID)) {
+						$isDone = $rbac->Users->unassign($roleTitle, $userID);
 					}
 					else {
-						if ($rbac->Users->hasRole($roleTitle, $userID)) {
-							$isDone = $rbac->Users->unassign($roleTitle, $userID);
-						}
-						else {
-							$isDone = $rbac->Users->assign($roleTitle, $userID);
-						}
-						if (!$isDone){
-							$genericUpdateError = "Echec de la mise à jour ('".$roleTitle."')";
-						}
-						else {
-							$genericUpdateSuccess = "Rôle mis à jour avec la permission '".$roleTitle."'";	
-						}
+						$isDone = $rbac->Users->assign($roleTitle, $userID);
+					}
+					if (!$isDone){
+						$genericError = "Echec de la mise à jour ('".$roleTitle."')";
+					}
+					else {
+						$genericSucces = "Rôle mis à jour avec la permission '".$roleTitle."'";	
 					}
 				}
 			}
@@ -107,14 +82,7 @@
 		
 
 		<!-- Update user's roles : Operation status indicator -->
-		<?php
-			if (!empty($genericUpdateError)){
-				echo "<div class='alert alert-danger'><strong>Erreur</strong> : ".$genericUpdateError."</div>";
-			} elseif (!empty($genericUpdateSuccess)){
-				echo "<div class='alert alert-success'><strong>Effectué</strong> : ".$genericUpdateSuccess."</div>";
-			}
-			
-		?>
+		<?php include 'functions/operation-status-indicator.php'; ?>
 
 		<h2>Modifier les rôles de '<?php echo $userFirstName." ".$userLastName ?>'</h2>
 
@@ -166,6 +134,7 @@
 
 
 	</div>
+
 <?php
 	}
 ?>

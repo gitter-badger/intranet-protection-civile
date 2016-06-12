@@ -17,4 +17,9 @@
 	if(!empty($commonError)) {
 		echo "<div class='alert alert-danger'><strong>Erreur</strong> : ".$commonError."</div>";
 	}
+	else {
+		$userFirstName=$user["first_name"];
+		$userLastName=$user["last_name"];
+	}
+		
 ?>

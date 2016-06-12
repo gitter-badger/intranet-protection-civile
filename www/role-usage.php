@@ -83,12 +83,12 @@
 					<div class="panel-heading">Utilisateurs</div>
 					<div class="panel-body">
 						<?php 
-							$query = "SELECT U.ID, U.last_name, U.first_name FROM rbac_rolepermissions AS RP INNER JOIN users AS U ON RP.PermissionId=U.id_user WHERE R.ID='$roleID' ORDER BY U.nom" or die("Erreur lors de la consultation" . mysqli_error($link)); 
-							$users = mysqli_query($link, $query);
-							while($user = mysqli_fetch_array($users)) { 
-								$userID=$user["ID"];
-								$userFirstName=$user["first_name"];
-								$userLastName=$user["last_name"];
+							$sql = "SELECT U.ID, U.last_name, U.first_name FROM rbac_userroles AS UR INNER JOIN users AS U ON UR.UserId=U.ID WHERE UR.RoleID='$roleID' ORDER BY U.last_name" or die("Erreur lors de la consultation" . mysqli_error($link)); 
+							$result = $link->query($sql);
+							while($row = $result->fetch_assoc()) {
+								$userID=$row["ID"];
+								$userFirstName=$row["first_name"];
+								$userLastName=$row["last_name"];
 								echo $userFirstName." ".$userLastName.", ";
 							}
 						?>
