@@ -1,7 +1,6 @@
 <?php
 include 'securite.php';
 require_once('connexion.php');
-require_once ('PhpRbac/src/PhpRbac/Rbac.php');
 if ($_SESSION['role'] != "1") { header("Location: accueil.php"); }else{ ?>
 
 
